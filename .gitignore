@@ -1,0 +1,13 @@
+.idea/
+.venv/
+frontend/node_modules/
+frontend/build/
+*/__pycache__/*
+*.pyc
+*.sqlite3
+.env
+.vite/
+timed_task/log/
+tests/*/*
+volumes/
+*.env

@@ -1,0 +1,44 @@
+# Web框架
+Django
+daphne
+
+# 爬虫依赖
+httpx
+beautifulsoup4
+lxml
+python-dateutil
+firecrawl-py
+httpx==0.25.0
+requests==2.32.3
+
+# 文档处理
+pdfminer.six
+pdf2image
+markitdown
+html2text
+
+# 数据库和存储
+redis
+psycopg2-binary
+
+# 向量数据库和搜索
+llama-index==0.12.25
+llama-index-core==0.12.25
+llama-index-vector-stores-milvus==0.5.0
+llama-index-storage-docstore-redis==0.3.0
+llama-index-llms-openai-like==0.3.0
+llama-index-embeddings-siliconflow==0.2.1
+llama_index-postprocessor-siliconflow_rerank
+llama_index-postprocessor-jinaai_rerank
+pymilvus
+
+# 工具库
+tqdm
+retry
+tenacity
+python-dotenv
+psutil
+
+# 测试和开发
+pytest
+pytest-asyncio

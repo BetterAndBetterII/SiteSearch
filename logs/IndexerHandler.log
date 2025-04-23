@@ -1,0 +1,727 @@
+处理任务 task-1745412874 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412875 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412875 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412874 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412875 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412874 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412871 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412874 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412875 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412904 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412903 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745412905 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413004 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413004 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413004 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413000 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413004 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413014 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413021 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413004 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+处理任务 task-1745413014 时发生错误: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+Traceback (most recent call last):
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/base_handler.py", line 115, in _handle_task
+    result = await self.process_task(task_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 84, in process_task
+    indexer: DataIndexer = self.get_indexer(site_id)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/handler/indexer_handler.py", line 53, in get_indexer
+    self.indexers[site_id] = IndexerFactory.get_instance(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 427, in get_instance
+    cls._instances[site_id] = DataIndexer(
+                              ^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/index_manager.py", line 81, in __init__
+    self.vector_store = MilvusVectorStore(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/src/backend/sitesearch/examples/../../../../src/backend/sitesearch/indexer/custom/milvus_vectorstore.py", line 280, in __init__
+    self._milvusclient = MilvusClient(
+                         ^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 67, in __init__
+    self._using = self._create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 924, in _create_connection
+    raise ex from ex
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/milvus_client/milvus_client.py", line 921, in _create_connection
+    connections.connect(using, user, password, db_name, token, uri=uri, **kwargs)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 461, in connect
+    connect_milvus(**kwargs, user=user, password=password, token=token, db_name=db_name)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/orm/connections.py", line 411, in connect_milvus
+    gh._wait_for_channel_ready(timeout=timeout)
+  File "/root/workspace/SiteSearch/.venv/lib/python3.11/site-packages/pymilvus/client/grpc_handler.py", line 153, in _wait_for_channel_ready
+    raise MilvusException(
+pymilvus.exceptions.MilvusException: <MilvusException: (code=2, message=Fail connecting to server on localhost:19530, illegal connection params or server unavailable)>
+索引文档时发生错误: All connection attempts failed
+索引文档时发生错误: 500, message='Attempt to decode JSON with unexpected mimetype: text/plain; charset=utf-8', url='http://gpu.betterspace.top:8080/v1/embeddings'
+索引文档时发生错误: 500, message='Attempt to decode JSON with unexpected mimetype: text/plain; charset=utf-8', url='http://gpu.betterspace.top:8080/v1/embeddings'
+索引文档时发生错误: 500, message='Attempt to decode JSON with unexpected mimetype: text/plain; charset=utf-8', url='http://gpu.betterspace.top:8080/v1/embeddings'
+索引文档时发生错误: 500, message='Attempt to decode JSON with unexpected mimetype: text/plain; charset=utf-8', url='http://gpu.betterspace.top:8080/v1/embeddings'
+索引文档时发生错误: 500, message='Attempt to decode JSON with unexpected mimetype: text/plain; charset=utf-8', url='http://gpu.betterspace.top:8080/v1/embeddings'
+索引文档时发生错误: 
+索引文档时发生错误: 
+索引文档时发生错误: 
+索引文档时发生错误: 
+索引文档时发生错误: 
+索引文档时发生错误: 
+索引文档时发生错误: 504, message='Attempt to decode JSON with unexpected mimetype: text/html', url='http://gpu.betterspace.top:8081/v1/embeddings'
