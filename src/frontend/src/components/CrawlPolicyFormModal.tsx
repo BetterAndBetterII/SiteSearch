@@ -182,6 +182,7 @@ export function CrawlPolicyFormModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1">URL匹配模式</label>
+              <label className="block text-xs font-small mb-1">https://(.*\.cuhk\.edu\.cn).*</label>
               <textarea
                 name="url_patterns"
                 value={formData.url_patterns}

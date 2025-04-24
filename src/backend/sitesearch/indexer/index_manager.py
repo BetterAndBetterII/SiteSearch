@@ -39,18 +39,25 @@ Settings.embed_model = SiliconFlowEmbedding(
     dimensions=int(os.getenv("EMB_DIMENSIONS", 1536)),
 )
 
-# 配置Reranker设置
-Settings.reranker = JinaRerank(
-    base_url=os.getenv("RERANKER_BASE_URL"),
-    model="bge-reranker-v2-m3",
-    api_key=os.getenv("RERANKER_API_KEY"),
-    top_n=10,
-)
 
 class DataIndexer:
     """站点索引管理器，支持按site_id进行命名空间管理"""
     
-    def __init__(self, redis_uri: str, milvus_uri: str, site_id: str):
+    def __init__(
+        self, 
+        redis_uri: str, 
+        milvus_uri: str, 
+        site_id: str,
+        redis_namespace_prefix: str = "sitesearch",
+        milvus_collection_prefix: str = "sitesearch",
+        chunk_size: int = 512,
+        chunk_overlap: int = 128,
+        similarity_metric: str = "cosine",
+        dim: int = None,
+        enable_sparse: bool = True,
+        sparse_embedding_function = None,
+        embed_model = None
+    ):
         """
         初始化站点索引管理器
         
@@ -58,13 +65,22 @@ class DataIndexer:
             redis_uri: Redis连接URI
             milvus_uri: Milvus连接URI
             site_id: 站点ID，用于命名空间隔离
+            redis_namespace_prefix: Redis命名空间前缀，默认为"sitesearch"
+            milvus_collection_prefix: Milvus集合前缀，默认为"sitesearch"
+            chunk_size: 文本分块大小，默认为512
+            chunk_overlap: 文本分块重叠大小，默认为128
+            similarity_metric: 相似度度量方式，默认为"cosine"
+            dim: 向量维度，默认使用环境变量设置
+            enable_sparse: 是否启用稀疏向量，默认为True
+            sparse_embedding_function: 稀疏向量嵌入函数，默认使用BGEM3
+            embed_model: 嵌入模型，默认使用Settings中配置的模型
         """
-        self.site_id = site_id
-        self.redis_namespace = f"sitesearch:{site_id}:docs"
-        # collection name can only contain numbers, letters and underscores
         if not re.match(r'^[a-zA-Z0-9_]+$', site_id):
             site_id = re.sub(r'[^a-zA-Z0-9_]', '_', site_id)
-        self.milvus_collection = f"sitesearch_{site_id}_vectors"
+        self.site_id = site_id
+        self.redis_namespace = f"{redis_namespace_prefix}:{site_id}:docs"
+        # collection name can only contain numbers, letters and underscores
+        self.milvus_collection = f"{milvus_collection_prefix}_{site_id}_vectors"
         
         # 解析URIs
         import urllib.parse
@@ -80,6 +96,12 @@ class DataIndexer:
             namespace=self.redis_namespace,
         )
         
+        # 使用传入的稀疏向量嵌入函数或默认值
+        sparse_func = sparse_embedding_function or BGEM3SparseEmbeddingFunction()
+        
+        # 使用传入的维度或环境变量
+        vector_dim = dim or int(os.getenv("EMB_DIMENSIONS", 1536))
+        
         # 初始化Milvus向量存储
         self.vector_store = MilvusVectorStore(
             uri="",  # 设置为空字符串避免使用本地文件
@@ -87,10 +109,10 @@ class DataIndexer:
             port=milvus_parsed.port,
             db_name=milvus_parsed.path[1:],
             collection_name=self.milvus_collection,
-            dim=int(os.getenv("EMB_DIMENSIONS", 1536)),
-            similarity_metric="cosine",
-            enable_sparse=True,
-            sparse_embedding_function=BGEM3SparseEmbeddingFunction(),
+            dim=vector_dim,
+            similarity_metric=similarity_metric,
+            enable_sparse=enable_sparse,
+            sparse_embedding_function=sparse_func,
         )
         
         # 初始化存储上下文
@@ -105,14 +127,17 @@ class DataIndexer:
             storage_context=self.storage_context,
         )
         
+        # 使用传入的嵌入模型或全局设置
+        self.embed_model = embed_model or Settings.embed_model
+        
         # 初始化摄入管道
         self.pipeline = IngestionPipeline(
             transformations=[
                 SentenceSplitter(
-                    chunk_size=512,
-                    chunk_overlap=128,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
                 ),
-                Settings.embed_model,
+                self.embed_model,
             ],
             vector_store=self.vector_store,
             docstore=self.doc_store,
@@ -155,34 +180,73 @@ class DataIndexer:
         await self.pipeline.arun(documents=docs)
         return doc_ids
 
-    async def remove_documents(self, doc_ids: List[str]) -> None:
+    async def aremove_documents(self, content_hashs: str) -> bool:
         """
         从索引中删除文档
         
         Args:
             doc_ids: 要删除的文档ID列表
         """
-        for doc_id in doc_ids:
-            await self.index.adelete_ref_doc(
-                ref_doc_id=doc_id,
-                delete_from_docstore=True
-            )
-            await self.doc_store.adelete_document(doc_id)
+        try:
+            for content_hash in content_hashs:
+                await self.index.adelete_ref_doc(
+                    ref_doc_id=f"{self.site_id}:{content_hash}",
+                    delete_from_docstore=True
+                )
+            await self.doc_store.adelete_document(f"{self.site_id}:{content_hash}")
+        except Exception as e:
+            print(f"删除文档失败: {e}")
+            return False
+        return True
+    
+    def remove_documents(self, content_hashs: List[str]) -> bool:
+        """
+        从索引中删除文档
+        
+        Args:
+            doc_ids: 要删除的文档ID列表
+        """
+        try:
+            for content_hash in content_hashs:
+                self.index.delete_ref_doc(
+                    ref_doc_id=f"{self.site_id}:{content_hash}",
+                    delete_from_docstore=True
+                )
+            self.doc_store.delete_document(f"{self.site_id}:{content_hash}")
+        except Exception as e:
+            print(f"删除文档失败: {e}")
+            return False
+        return True
 
     async def remove_all_documents(self) -> None:
         """删除该站点的所有文档"""
         all_docs = self.doc_store.docs
         for doc_id in all_docs.keys():
             if doc_id.startswith(f"{self.site_id}:"):
-                await self.remove_documents([doc_id])
+                await self.aremove_documents([doc_id])
 
-    async def get_document(self, doc_id: str) -> Optional[Document]:
+    async def get_document_by_content_hash(self, content_hash: str) -> Optional[Document]:
+        """
+        获取指定文档
+        
+        Args:
+            content_hash: 文档内容hash
+            
+        Returns:
+            Optional[Document]: 文档对象，如果不存在则返回None
+        """
+        try:
+            return await self.doc_store.aget_document(f"{self.site_id}:{content_hash}")
+        except KeyError:
+            return None
+        
+    async def get_document_by_id(self, doc_id: str) -> Optional[Document]:
         """
         获取指定文档
         
         Args:
             doc_id: 文档ID
-            
+
         Returns:
             Optional[Document]: 文档对象，如果不存在则返回None
         """
@@ -211,26 +275,26 @@ class DataIndexer:
         
         return site_docs
 
-    async def update_document(self, doc_id: str, new_content: str) -> bool:
+    async def update_document(self, content_hash: str, new_content: str) -> bool:
         """
         更新文档内容
         
         Args:
-            doc_id: 文档ID
+            content_hash: 文档内容hash
             new_content: 新的文档内容
             
         Returns:
             bool: 更新是否成功
         """
         try:
-            old_doc = await self.get_document(doc_id)
+            old_doc = await self.get_document_by_content_hash(content_hash)   
             if not old_doc:
                 return False
                 
             # 创建新文档，保留原有元数据
             new_doc = Document(
                 text=new_content,
-                id_=doc_id,
+                id_=f"{self.site_id}:{content_hash}",
                 metadata={
                     **old_doc.metadata,
                     "updated_at": datetime.now().isoformat()
@@ -238,7 +302,7 @@ class DataIndexer:
             )
             
             # 删除旧文档并添加新文档
-            await self.remove_documents([doc_id])
+            await self.aremove_documents([f"{self.site_id}:{content_hash}"])
             await self.pipeline.arun(documents=[new_doc])
             return True
         except Exception:
@@ -249,7 +313,9 @@ class DataIndexer:
         query: str,
         top_k: int = 10,
         rerank: bool = True,
-        similarity_cutoff: float = 0.6
+        rerank_top_k: int = 10,
+        similarity_cutoff: float = 0.6,
+        search_kwargs: Dict[str, Any] = None
     ) -> List[Dict[str, Any]]:
         """
         检索相关文档
@@ -258,7 +324,9 @@ class DataIndexer:
             query: 查询文本
             top_k: 返回的最大文档数量
             rerank: 是否进行重排序
+            rerank_top_k: 重排序返回的最大文档数量
             similarity_cutoff: 相似度阈值
+            search_kwargs: 搜索的额外参数
             
         Returns:
             List[Dict[str, Any]]: 检索结果列表
@@ -267,10 +335,16 @@ class DataIndexer:
         from llama_index.core.indices.vector_store import VectorIndexRetriever
         from llama_index.core.postprocessor import SimilarityPostprocessor
         
+        # 合并默认参数和传入的搜索参数
+        search_params = {}
+        if search_kwargs:
+            search_params.update(search_kwargs)
+        
         # 创建检索器
         vector_retriever = VectorIndexRetriever(
             index=self.index,
-            similarity_top_k=top_k * 10 if rerank else top_k,
+            similarity_top_k=top_k,
+            **search_params
         )
         
         # 执行检索
@@ -279,7 +353,13 @@ class DataIndexer:
         
         # 重排序处理
         if rerank:
-            nodes = Settings.reranker.postprocess_nodes(nodes, qb)
+            reranker = JinaRerank(
+                base_url=os.getenv("RERANKER_BASE_URL"),
+                model="bge-reranker-v2-m3",
+                api_key=os.getenv("RERANKER_API_KEY"),
+                top_n=rerank_top_k,
+            )
+            nodes = reranker.postprocess_nodes(nodes, qb)
             nodes = SimilarityPostprocessor(
                 similarity_cutoff=similarity_cutoff
             ).postprocess_nodes(nodes)
@@ -288,7 +368,7 @@ class DataIndexer:
         # 格式化结果
         results = []
         for node in nodes:
-            doc = await self.get_document(node.node.ref_doc_id)
+            doc = await self.get_document_by_id(node.node.ref_doc_id)
             if doc:
                 results.append({
                     "id": node.node.ref_doc_id,
@@ -298,65 +378,7 @@ class DataIndexer:
                 })
         
         return results
-
-    async def query_with_context(
-        self,
-        query: str,
-        top_k: int = 5,
-        similarity_cutoff: float = 0.6,
-        context_window: int = 3
-    ) -> Dict[str, Any]:
-        """
-        带上下文的查询
-        
-        Args:
-            query: 查询文本
-            top_k: 返回的最大文档数量
-            similarity_cutoff: 相似度阈值
-            context_window: 上下文窗口大小
-            
-        Returns:
-            Dict[str, Any]: 查询结果
-        """
-        from llama_index.core import QueryBundle, PromptTemplate
-        
-        # 自定义提示模板
-        custom_prompt_str = (
-            "基于以下上下文信息回答问题。确保回答基于提供的上下文，并提供相关的有效链接。\n"
-            "---------------------\n"
-            "{context_str}\n"
-            "---------------------\n"
-            "根据上下文信息，回答以下问题: {query_str}\n"
-        )
-        custom_prompt = PromptTemplate(custom_prompt_str)
-        
-        # 检索相关文档
-        nodes = await self.retrieve(
-            query=query,
-            top_k=top_k,
-            similarity_cutoff=similarity_cutoff
-        )
-        
-        if not nodes:
-            return {
-                "response": "抱歉，没有找到相关信息。",
-                "sources": []
-            }
-        
-        # 构建查询引擎
-        query_engine = self.index.as_query_engine(
-            similarity_top_k=top_k,
-            text_qa_template=custom_prompt
-        )
-        
-        # 执行查询
-        response = await query_engine.aquery(QueryBundle(query))
-        
-        return {
-            "response": response.response,
-            "sources": nodes
-        }
-
+    
     async def batch_add_documents(
         self,
         documents: List[Dict[str, Any]],
@@ -413,7 +435,9 @@ class IndexerFactory:
         cls,
         site_id: str,
         redis_uri: str = os.getenv("REDIS_URL"),
-        milvus_uri: str = os.getenv("MILVUS_URI")
+        milvus_uri: str = os.getenv("MILVUS_URI"),
+        use_cache: bool = False,
+        **kwargs
     ) -> DataIndexer:
         """
         获取数据索引管理器实例，如果不存在则创建新实例
@@ -422,14 +446,41 @@ class IndexerFactory:
             site_id: 站点ID
             redis_uri: Redis连接URI
             milvus_uri: Milvus连接URI
+            use_cache: 是否使用缓存的实例，默认不使用缓存
+            **kwargs: 传递给DataIndexer的其他参数，例如：
+                - redis_namespace_prefix: Redis命名空间前缀
+                - milvus_collection_prefix: Milvus集合前缀
+                - chunk_size: 文本分块大小
+                - chunk_overlap: 文本分块重叠大小
+                - similarity_metric: 相似度度量方式
+                - dim: 向量维度
+                - enable_sparse: 是否启用稀疏向量
+                - sparse_embedding_function: 稀疏向量嵌入函数
+                - embed_model: 嵌入模型
             
         Returns:
             DataIndexer: 数据索引管理器实例
         """
-        if site_id not in cls._instances:
-            cls._instances[site_id] = DataIndexer(
-                redis_uri=redis_uri,
-                milvus_uri=milvus_uri,
-                site_id=site_id
-            )
-        return cls._instances[site_id] 
+        # 如果使用缓存且实例已存在，则返回缓存的实例
+        cache_key = f"{site_id}:{redis_uri}:{milvus_uri}"
+        if use_cache and cache_key in cls._instances:
+            return cls._instances[cache_key]
+            
+        # 创建新实例
+        indexer = DataIndexer(
+            redis_uri=redis_uri,
+            milvus_uri=milvus_uri,
+            site_id=site_id,
+            **kwargs
+        )
+        
+        # 如果使用缓存，则保存实例
+        if use_cache:
+            cls._instances[cache_key] = indexer
+            
+        return indexer
+        
+    @classmethod
+    def clear_cache(cls):
+        """清除缓存的实例"""
+        cls._instances.clear()

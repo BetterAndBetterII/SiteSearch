@@ -31,7 +31,7 @@ from .documents import (
 )
 
 from .search import (
-    search,
+    # search,
     semantic_search,
     chat,
     search_feedback,

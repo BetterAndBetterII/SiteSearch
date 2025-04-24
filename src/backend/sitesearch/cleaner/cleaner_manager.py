@@ -8,6 +8,9 @@ from .cleaner_strategy import (
     MarkdownStrategy,
     HTMLStrategy,
     PlainTextStrategy,
+    ExcelStrategy,
+    PptxStrategy,
+    XMLStrategy,
 )
 
 class DataCleaner:
@@ -15,6 +18,9 @@ class DataCleaner:
         self.strategies = strategies or [
             PDFStrategy(),
             DocxStrategy(),
+            ExcelStrategy(),
+            PptxStrategy(),
+            XMLStrategy(),
             SearchPageStrategy(),  # 针对搜索页面的策略
             CommonPageStrategy(),  # 优先使用针对常见page页面的策略
             MarkdownStrategy(),  # 其次尝试转换为Markdown

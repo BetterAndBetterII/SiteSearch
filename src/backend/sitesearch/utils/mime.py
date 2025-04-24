@@ -9,18 +9,18 @@ PLAIN_TEXT_MIMETYPES = [
 ]
 
 BINARY_MIMETYPES = [
-    "image/png",
-    "image/jpeg",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
+    # "image/png",
+    # "image/jpeg",
+    # "image/gif",
+    # "image/webp",
+    # "image/svg+xml",    NOT SUPPORT
     "application/pdf",
-    "application/octet-stream",
+    # "application/octet-stream",  NOT SUPPORT
     # docx, ppt, xlsx, zip, etc.
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/zip",
-    "application/x-zip-compressed",
-    "application/x-7z-compressed",
+    # "application/zip",
+    # "application/x-zip-compressed",
+    # "application/x-7z-compressed",   NOT SUPPORT
 ]

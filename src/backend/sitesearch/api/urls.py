@@ -48,7 +48,8 @@ urlpatterns = [
     path('sites/<str:site_id>/documents/list/delete/', documents.document_delete, name='document_delete'),
     
     # 搜索模块
-    # path('semantic-search/', search.semantic_search, name='semantic_search'),
+    # path('search/', search.search, name='search'),
+    path('semantic-search/', search.semantic_search, name='semantic_search'),
     # path('chat/', search.chat, name='chat'),
     # path('search-feedback/<int:search_log_id>/', search.search_feedback, name='search_feedback'),
     

@@ -69,7 +69,7 @@ class StorageHandler(BaseHandler):
                 self.logger.warning(f"任务数据缺少站点ID，无法确定文档归属: {task_data.get('url')}")
                 # 可以设置一个默认站点，或者返回错误
                 result = task_data.copy()
-                result['index_operation'] = "error"
+                result['index_operation'] = "skip"
                 result['error'] = "任务数据缺少站点ID"
                 return result
             
@@ -95,7 +95,7 @@ class StorageHandler(BaseHandler):
                 except Exception as e:
                     self.logger.exception(f"创建新文档时发生错误: {str(e)}")
                     result = task_data.copy()
-                    result['index_operation'] = "error"
+                    result['index_operation'] = "skip"
                     result['error'] = str(e)
                     return result
             
@@ -112,7 +112,7 @@ class StorageHandler(BaseHandler):
                 except Exception as e:
                     self.logger.exception(f"将文档添加到站点时发生错误: {str(e)}")
                     result = task_data.copy()
-                    result['index_operation'] = "error"
+                    result['index_operation'] = "skip"
                     result['error'] = str(e)
                     return result
             
@@ -129,7 +129,7 @@ class StorageHandler(BaseHandler):
                 except Exception as e:
                     self.logger.exception(f"更新文档时发生错误: {str(e)}")
                     result = task_data.copy()
-                    result['index_operation'] = "error"
+                    result['index_operation'] = "skip"
                     result['error'] = str(e)
                     return result
             
@@ -146,7 +146,7 @@ class StorageHandler(BaseHandler):
                 # 处理其他情况（如error）
                 self.logger.warning(f"无法确定文档 {task_data['url']} 的操作类型: {operation}")
                 result = task_data.copy()
-                result['index_operation'] = "error"
+                result['index_operation'] = "skip"
                 result['error'] = f"无法确定操作类型: {operation}"
                 return result 
         except SkipError as e:
@@ -155,6 +155,6 @@ class StorageHandler(BaseHandler):
         except Exception as e:
             self.logger.exception(f"处理存储任务时发生错误: {str(e)}")
             result = task_data.copy()
-            result['index_operation'] = "error"
+            result['index_operation'] = "skip"
             result['error'] = str(e)
             return result

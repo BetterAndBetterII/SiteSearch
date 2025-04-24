@@ -16,12 +16,6 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 
-from src.backend.sitesearch.handler import HandlerFactory, ComponentStatus
-from src.backend.sitesearch.crawler import BaseCrawler
-from src.backend.sitesearch.cleaner import DataCleaner
-from src.backend.sitesearch.storage.manager import DataStorage
-from src.backend.sitesearch.indexer import DataIndexer
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -39,7 +33,8 @@ def component_worker(component_type, redis_url, milvus_uri, worker_id, config):
         config: 组件配置
     """
     # 初始化Django
-    # init_django()
+    from src.backend.sitesearch.utils.django_init import init_django
+    init_django()
     from src.backend.sitesearch.handler import HandlerFactory, ComponentStatus
     
     # 初始化Redis客户端用于记录处理时间和更新活动时间

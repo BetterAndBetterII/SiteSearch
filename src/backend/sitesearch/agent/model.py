@@ -10,7 +10,7 @@ import traceback
 from datetime import datetime
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from agent.optimizer import Optimizer
+from src.backend.sitesearch.agent.optimizer import Optimizer
 
 # 默认设置
 MODEL = "gpt-4o-mini"

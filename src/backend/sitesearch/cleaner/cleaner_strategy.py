@@ -12,7 +12,7 @@ import tempfile
 
 from .base import CleaningStrategy
 
-from src.backend.tools.file_markdown_tool import ai_converter
+from src.backend.tools.file_markdown_tool import ai_converter, markitdown_converter
 
 
 class SimpleHTMLCleaner(DataCleaner):
@@ -333,6 +333,34 @@ class DocxStrategy(CleaningStrategy):
         except Exception as e:
             print(f"Docx处理错误: {str(e)}")
             return f"Docx处理失败: {str(e)}"
+        
+class MarkItDownStrategy(CleaningStrategy):
+    """Excel内容清洗策略"""
+
+    def should_handle(self, url: str, mimetype: str, content: str) -> bool:
+        accept_mimetypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/xml'
+        ]
+        return any(mimetype.startswith(mimetype) for mimetype in accept_mimetypes)
+    
+    def clean(self, content: bytes | str) -> str:
+        try:
+            # 创建临时文件保存Excel内容
+            temp_path = tempfile.mktemp()
+            with open(temp_path, 'wb') as f:
+                f.write(content)
+
+            # 使用markitdown
+            output_path = markitdown_converter(temp_path)
+            with open(output_path, 'r', encoding="utf-8") as f:
+                text = f.read()
+            return text
+        except Exception as e:
+            print(f"Excel处理错误: {str(e)}")
+            return f"Excel处理失败: {str(e)}"
+
 
 class ImageDiscardStrategy(CleaningStrategy):
     """图片丢弃策略"""

@@ -8,9 +8,10 @@ import json
 import asyncio
 import os
 from django.core.paginator import Paginator
+import traceback
 
 from src.backend.sitesearch.api.models import Site, SearchLog
-from agent.chat_service import ChatService
+from src.backend.sitesearch.agent.chat_service import ChatService
 
 
 def get_client_info(request):
@@ -21,96 +22,96 @@ def get_client_info(request):
     }
 
 
-def search(request):
-    """
-    全文搜索接口
-    GET: 执行全文搜索，支持跨站点或特定站点搜索，支持分页和排序
-    """
-    try:
-        # 获取查询参数
-        query = request.GET.get('q', '')
-        site_id = request.GET.get('site_id')
-        page = int(request.GET.get('page', 1))
-        page_size = int(request.GET.get('page_size', 10))
-        sort_by = request.GET.get('sort_by', 'relevance')  # relevance, date, title
-        filter_mimetype = request.GET.get('mimetype')
-        date_start = request.GET.get('date_start')
-        date_end = request.GET.get('date_end')
+# def search(request):
+#     """
+#     全文搜索接口
+#     GET: 执行全文搜索，支持跨站点或特定站点搜索，支持分页和排序
+#     """
+#     try:
+#         # 获取查询参数
+#         query = request.GET.get('q', '')
+#         site_id = request.GET.get('site_id')
+#         page = int(request.GET.get('page', 1))
+#         page_size = int(request.GET.get('page_size', 10))
+#         sort_by = request.GET.get('sort_by', 'relevance')  # relevance, date, title
+#         filter_mimetype = request.GET.get('mimetype')
+#         date_start = request.GET.get('date_start')
+#         date_end = request.GET.get('date_end')
         
-        # 验证查询不为空
-        if not query:
-            return JsonResponse({'error': '搜索查询不能为空'}, status=400)
+#         # 验证查询不为空
+#         if not query:
+#             return JsonResponse({'error': '搜索查询不能为空'}, status=400)
         
-        # 验证站点ID (如果提供)
-        if site_id:
-            try:
-                Site.objects.get(id=site_id)
-            except Site.DoesNotExist:
-                return JsonResponse({'error': f'站点不存在: {site_id}'}, status=400)
+#         # 验证站点ID (如果提供)
+#         if site_id:
+#             try:
+#                 Site.objects.get(id=site_id)
+#             except Site.DoesNotExist:
+#                 return JsonResponse({'error': f'站点不存在: {site_id}'}, status=400)
         
-        # 记录搜索开始时间
-        import time
-        start_time = time.time()
+#         # 记录搜索开始时间
+#         import time
+#         start_time = time.time()
         
-        # 构建搜索过滤器
-        filters = {}
-        if site_id:
-            filters['site_id'] = site_id
-        if filter_mimetype:
-            filters['mimetype'] = filter_mimetype
-        if date_start:
-            filters['created_at__gte'] = date_start
-        if date_end:
-            filters['created_at__lte'] = date_end
+#         # 构建搜索过滤器
+#         filters = {}
+#         if site_id:
+#             filters['site_id'] = site_id
+#         if filter_mimetype:
+#             filters['mimetype'] = filter_mimetype
+#         if date_start:
+#             filters['created_at__gte'] = date_start
+#         if date_end:
+#             filters['created_at__lte'] = date_end
         
-        # 从索引模块中导入搜索函数
-        from src.backend.sitesearch.indexer.search import search_documents
+#         # 从索引模块中导入搜索函数
+#         from src.backend.sitesearch.indexer.search import search_documents
         
-        # 执行搜索
-        search_results = search_documents(
-            query=query,
-            filters=filters,
-            page=page,
-            page_size=page_size,
-            sort_by=sort_by
-        )
+#         # 执行搜索
+#         search_results = search_documents(
+#             query=query,
+#             filters=filters,
+#             page=page,
+#             page_size=page_size,
+#             sort_by=sort_by
+#         )
         
-        # 计算执行时间
-        execution_time_ms = int((time.time() - start_time) * 1000)
+#         # 计算执行时间
+#         execution_time_ms = int((time.time() - start_time) * 1000)
         
-        # 记录搜索日志
-        client_info = get_client_info(request)
-        search_log = SearchLog(
-            query=query,
-            search_type='fulltext',
-            site_id=site_id,
-            results_count=search_results.get('total_count', 0),
-            execution_time_ms=execution_time_ms,
-            user_ip=client_info['user_ip'],
-            user_agent=client_info['user_agent'],
-            filters=filters,
-            result_ids=[r.get('id') for r in search_results.get('results', [])]
-        )
-        search_log.save()
+#         # 记录搜索日志
+#         client_info = get_client_info(request)
+#         search_log = SearchLog(
+#             query=query,
+#             search_type='fulltext',
+#             site_id=site_id,
+#             results_count=search_results.get('total_count', 0),
+#             execution_time_ms=execution_time_ms,
+#             user_ip=client_info['user_ip'],
+#             user_agent=client_info['user_agent'],
+#             filters=filters,
+#             result_ids=[r.get('id') for r in search_results.get('results', [])]
+#         )
+#         search_log.save()
         
-        # 构建响应
-        response = {
-            'query': query,
-            'results': search_results.get('results', []),
-            'total_count': search_results.get('total_count', 0),
-            'page': page,
-            'page_size': page_size,
-            'execution_time_ms': execution_time_ms,
-            'filters': filters
-        }
+#         # 构建响应
+#         response = {
+#             'query': query,
+#             'results': search_results.get('results', []),
+#             'total_count': search_results.get('total_count', 0),
+#             'page': page,
+#             'page_size': page_size,
+#             'execution_time_ms': execution_time_ms,
+#             'filters': filters
+#         }
         
-        return JsonResponse(response)
+#         return JsonResponse(response)
         
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
 
 
-def semantic_search(request):
+async def semantic_search(request):
     """
     语义搜索接口
     GET: 执行语义搜索，支持自然语言查询和相关度排序
@@ -130,7 +131,7 @@ def semantic_search(request):
         # 验证站点ID (如果提供)
         if site_id:
             try:
-                Site.objects.get(id=site_id)
+                await Site.objects.aget(id=site_id)
             except Site.DoesNotExist:
                 return JsonResponse({'error': f'站点不存在: {site_id}'}, status=400)
         
@@ -149,7 +150,7 @@ def semantic_search(request):
         from src.backend.sitesearch.indexer.search import semantic_search_documents
         
         # 执行搜索
-        search_results = semantic_search_documents(
+        search_results = await semantic_search_documents(
             query=query,
             filters=filters,
             top_k=page_size,
@@ -172,7 +173,7 @@ def semantic_search(request):
             filters=filters,
             result_ids=[r.get('id') for r in search_results.get('results', [])]
         )
-        search_log.save()
+        await search_log.asave()
         
         # 构建响应
         response = {
@@ -188,6 +189,7 @@ def semantic_search(request):
         return JsonResponse(response)
         
     except Exception as e:
+        traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
 

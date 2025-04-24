@@ -123,7 +123,9 @@ class BaseHandler(ABC):
                 # 确保任务ID在下游任务中保持一致
                 result["task_id"] = task_id
                 self.redis_client.lpush(self.output_queue, json.dumps(result))
-
+        except TypeError as e:
+            self.logger.exception(f"{task_data['url']}，mime: {task_data['mimetype']} 处理失败: {str(e)}")
+            raise e
         except SkipError as e:
             self.logger.info(f"跳过任务: {task_id}, {e}")
             skiped = True

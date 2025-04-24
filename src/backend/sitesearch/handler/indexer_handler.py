@@ -88,7 +88,7 @@ class IndexerHandler(BaseHandler):
         indexer: DataIndexer = self.get_indexer(site_id)
         
         try:
-            if index_operation == "new" or index_operation == "edit" or index_operation == "skip":
+            if index_operation == "new" or index_operation == "edit" or index_operation == "skip" or index_operation == "new_site":
                 # 添加或更新索引
                 result = await indexer.add_documents([task_data])
                 # 标记文档为已索引

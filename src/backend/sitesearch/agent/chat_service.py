@@ -11,8 +11,8 @@ from datetime import datetime
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
-from agent.model import Agent
-from agent.analyzer import Analyzer
+from src.backend.sitesearch.agent.model import Agent
+from src.backend.sitesearch.agent.analyzer import Analyzer
 
 # 配置默认值
 DEFAULT_MODEL = "gpt-4o-mini"

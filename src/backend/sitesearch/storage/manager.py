@@ -99,7 +99,7 @@ class DataStorage:
         """
         return mark_document_indexed(document_id, indexed)
     
-    def delete_document(self, url: str, site_id: Optional[str] = None) -> bool:
+    def delete_document(self, url: str, site_id) -> bool:
         """
         删除文档
         

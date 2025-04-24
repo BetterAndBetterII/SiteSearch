@@ -7,11 +7,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
 import json
-from datetime import datetime
+import traceback
+from asgiref.sync import sync_to_async
 
 from src.backend.sitesearch.api.models import Site
 from src.backend.sitesearch.storage.models import Document, SiteDocument
 from src.backend.sitesearch.api.views.manage import get_manager
+from src.backend.sitesearch.indexer.index_manager import IndexerFactory
 
 
 def document_list(request, site_id):
@@ -214,7 +216,7 @@ def document_search(request, site_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
-def document_delete(request, site_id):
+async def document_delete(request, site_id):
     """
     删除特定站点所有文档
     POST: 删除特定站点所有文档
@@ -224,7 +226,7 @@ def document_delete(request, site_id):
     
     try:
         # 验证站点是否存在
-        site = get_object_or_404(Site, id=site_id)
+        site = await sync_to_async(get_object_or_404)(Site, id=site_id)
         
         # 解析请求数据
         try:
@@ -248,18 +250,21 @@ def document_delete(request, site_id):
         
         deleted_count = 0
         failed_count = 0
+
+        indexer = IndexerFactory.get_instance(site_id)
         
         if delete_all:
             # 获取站点的所有文档ID
             site_documents = SiteDocument.objects.filter(site_id=site_id)
-            document_ids = site_documents.values_list('document_id', flat=True)
+            document_ids = await sync_to_async(site_documents.values_list)('document_id', flat=True)
             documents = Document.objects.filter(id__in=document_ids)
-            total_count = documents.count()
+            total_count = await documents.acount()
             
-            for doc in documents:
+            async for doc in documents:
                 # 使用新的支持站点的删除方法
-                result = storage.delete_document(doc.url, site_id)
-                if result:
+                result1 = await sync_to_async(storage.delete_document)(doc.url, site_id)
+                result2 = indexer.remove_documents([doc.content_hash])
+                if result1 and result2:
                     deleted_count += 1
                 else:
                     failed_count += 1
@@ -278,7 +283,7 @@ def document_delete(request, site_id):
             for doc_id in document_ids:
                 try:
                     # 验证文档是否属于指定站点
-                    site_doc = SiteDocument.objects.filter(document_id=doc_id, site_id=site_id).first()
+                    site_doc = await SiteDocument.objects.filter(document_id=doc_id, site_id=site_id).afirst()
                     if not site_doc:
                         failed_count += 1
                         results.append({
@@ -288,11 +293,12 @@ def document_delete(request, site_id):
                         })
                         continue
                     
-                    doc = Document.objects.get(id=doc_id)
+                    doc = await sync_to_async(Document.objects.get)(id=doc_id)
                     # 使用新的支持站点的删除方法
-                    result = storage.delete_document(doc.url, site_id)
+                    result1 = await sync_to_async(storage.delete_document)(doc.url, site_id)
+                    result2 = indexer.remove_documents([doc.content_hash])
                     
-                    if result:
+                    if result1 and result2:
                         deleted_count += 1
                         results.append({
                             'id': doc_id,
@@ -324,6 +330,7 @@ def document_delete(request, site_id):
             })
         
     except Exception as e:
+        traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt

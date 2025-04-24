@@ -3,6 +3,10 @@ WSGI配置
 """
 
 import os
+import multiprocessing
+
+# 多进程支持
+multiprocessing.set_start_method('spawn', force=True)
 
 from django.core.asgi import get_asgi_application
 import dotenv

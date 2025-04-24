@@ -6,7 +6,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
+from asgiref.sync import sync_to_async
 import json
+import re
 
 from src.backend.sitesearch.api.models import Site
 
@@ -113,7 +115,7 @@ def site_list(request):
 
 
 @csrf_exempt
-def site_detail(request, site_id):
+async def site_detail(request, site_id):
     """
     获取、更新或删除单个站点
     GET: 获取单个站点详情
@@ -121,7 +123,7 @@ def site_detail(request, site_id):
     DELETE: 删除站点及其所有关联配置
     """
     try:
-        site = get_object_or_404(Site, id=site_id)
+        site = await sync_to_async(get_object_or_404)(Site, id=site_id)
         
         if request.method == 'GET':
             return JsonResponse({
@@ -156,7 +158,7 @@ def site_detail(request, site_id):
                 if 'metadata' in data:
                     site.metadata = data['metadata']
                 
-                site.save()
+                await site.asave()
                 
                 return JsonResponse({
                     'id': site.id,
@@ -175,8 +177,11 @@ def site_detail(request, site_id):
             # 获取站点名称用于响应
             site_name = site.name
             
-            # 删除站点 (所有关联的模型将通过外键级联删除)
-            site.delete()
+            # 删除站点 ，删除文档站点关系，删除文档，删除index
+            from src.backend.sitesearch.indexer.index_manager import IndexerFactory
+            indexer = IndexerFactory.get_instance(site_id)
+            await site.adelete()
+            await indexer.remove_all_documents()
             
             return JsonResponse({
                 'message': f'站点已删除: {site_name}',

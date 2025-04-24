@@ -189,7 +189,15 @@ class HttpxWorker(BaseCrawler):
         try:
             # 发送HTTP请求
             response = self.client.get(url)
-            response.raise_for_status()  # 如果响应码不是2xx，抛出异常
+
+            if response.status_code // 100 == 4:
+                # 4xx错误，跳过
+                raise SkipError(f"HTTP错误: {response.status_code}")
+            elif response.status_code // 100 == 5:
+                # 5xx错误，跳过
+                raise SkipError(f"HTTP错误: {response.status_code}")
+            
+            # response.raise_for_status()  # 如果响应码不是2xx，抛出异常
             
             # 记录基本信息
             result["status_code"] = response.status_code
@@ -238,7 +246,9 @@ class HttpxWorker(BaseCrawler):
                 raise SkipError(f"不支持的内容类型: {type(result['content'])}")
             
             return result
-        
+        except SkipError as e:
+            logger.info(f"由于 {url} 错误码 {response.status_code} 跳过")
+            raise e
         except httpx.RequestError as e:
             logger.error(f"请求 {url} 失败: {str(e)}")
             result["error"] = f"请求失败: {str(e)}"

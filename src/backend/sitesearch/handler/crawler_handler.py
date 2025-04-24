@@ -58,10 +58,11 @@ class CrawlerHandler(BaseHandler):
         print(f"爬虫初始化完成，监听队列：{self.input_queue}，输出队列：{self.output_queue}")
         
         # 爬取历史，用于去重
-        self.crawled_urls = set()
+        # self.crawled_urls = set()  改用基于redis的共享爬取历史
+        self.crawled_urls_key = f"crawler:crawled_urls:{self.input_queue}"
         
         self.logger = logging.getLogger(f"CrawlerHandler:{self.handler_id}")
-        self.logger.setLevel(logging.WARNING)
+        self.logger.setLevel(logging.INFO)
     
     def _init_crawler(self):
         """初始化爬虫实例"""
@@ -91,6 +92,18 @@ class CrawlerHandler(BaseHandler):
             return ""
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
     
+    def _is_url_crawled(self, url: str) -> bool:
+        """检查URL是否已爬取"""
+        return self.redis_client.sismember(self.crawled_urls_key, url)
+
+    def _add_url_to_crawled(self, url: str):
+        """添加URL到爬取历史"""
+        self.redis_client.sadd(self.crawled_urls_key, url)
+
+    def _get_crawled_urls_length(self) -> int:
+        """获取爬取历史长度"""
+        return self.redis_client.scard(self.crawled_urls_key)
+
     async def process_task(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         处理爬取任务
@@ -108,15 +121,17 @@ class CrawlerHandler(BaseHandler):
         
         # 检查是否已爬取过该URL
         url = self.crawler.normalize_url(url)
-        if url in self.crawled_urls:
+        if self._is_url_crawled(url):
             self.logger.info(f"URL已爬取，跳过: {url}")
+            # 清空队列
+            self.redis_client.ltrim(self.input_queue, 0, 0)
             return {
                 "url": url,
                 "status": "skipped",
                 "reason": "already_crawled"
             }
         
-        if len(self.crawled_urls) >= self.crawler_config.get("max_urls", 1000):
+        if self._get_crawled_urls_length() >= self.crawler_config.get("max_urls", 1000):
             self.logger.info(f"爬取数量达到限制，跳过: {url}")
             return {
                 "url": url,
@@ -157,13 +172,13 @@ class CrawlerHandler(BaseHandler):
             crawl_result['timestamp'] = time.time()
             
             # 记录已爬取的URL
-            self.crawled_urls.add(url)
+            self._add_url_to_crawled(url)
 
             # 获取links，将没有爬取过的links添加到队列中
             links = crawl_result.get('links', [])
             for link in links:
                 link = self.crawler.normalize_url(link)
-                if link not in self.crawled_urls and self._is_url_match_pattern(link):
+                if not self._is_url_crawled(link) and self._is_url_match_pattern(link):
                     self.redis_client.lpush(self.input_queue, json.dumps({
                         "url": link,
                         "site_id": site_id,

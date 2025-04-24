@@ -123,6 +123,7 @@ export function DocumentsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [refreshLoading, setRefreshLoading] = useState(false);
+  const [isDeleteAll, setIsDeleteAll] = useState(false);
   
   // 单个文档操作状态
   const [showDocumentDialog, setShowDocumentDialog] = useState(false);
@@ -298,6 +299,34 @@ export function DocumentsPage() {
       setShowDeleteDialog(false);
       // 清除选择
       setSelectedDocIds([]);
+      setIsDeleteAll(false);
+    } catch (err) {
+      console.error('删除文档失败', err);
+      setError('删除文档失败，请稍后重试');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // 删除所有文档
+  const deleteAllDocuments = async () => {
+    if (selectedDocIds.length === 0) return;
+    
+    setDeleteLoading(true);
+    
+    try {
+      await documentApi.deleteDocuments(siteId!, {
+        document_ids: selectedDocIds,
+        delete_all: true
+      });
+      
+      // 刷新文档列表
+      fetchDocuments();
+      // 关闭对话框
+      setShowDeleteDialog(false);
+      // 清除选择
+      setSelectedDocIds([]);
+      setIsDeleteAll(false);
     } catch (err) {
       console.error('删除文档失败', err);
       setError('删除文档失败，请稍后重试');
@@ -482,6 +511,18 @@ export function DocumentsPage() {
             >
               <TrashIcon className="h-4 w-4 mr-1" />
               删除 {selectedDocIds.length > 0 ? `(${selectedDocIds.length})` : ''}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setShowDeleteDialog(true);
+                setIsDeleteAll(true);
+              }}
+              disabled={selectedDocIds.length === 0}
+            >
+              <TrashIcon className="h-4 w-4 mr-1" />
+              全部删除
             </Button>
           </div>
         </div>
@@ -802,7 +843,7 @@ export function DocumentsPage() {
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>
-              您确定要删除选中的 {selectedDocIds.length} 个文档吗？此操作无法撤销。
+              {isDeleteAll ? '您确定要删除所有文档吗？此操作无法撤销。' : `您确定要删除选中的 ${selectedDocIds.length} 个文档吗？此操作无法撤销。`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:justify-end">
@@ -818,7 +859,7 @@ export function DocumentsPage() {
             <Button 
               type="button" 
               variant="destructive"
-              onClick={deleteSelectedDocuments}
+              onClick={isDeleteAll ? deleteAllDocuments : deleteSelectedDocuments}
               disabled={deleteLoading}
             >
               {deleteLoading ? <Spinner /> : '确认删除'}
