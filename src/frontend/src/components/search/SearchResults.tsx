@@ -10,11 +10,10 @@ const highlightContent = (content: string) => {
 
 type SearchResultProps = {
   result: SearchResultItem;
-  query: string;
 };
 
 // 单个搜索结果组件
-const SearchResult: React.FC<SearchResultProps> = ({ result, query }) => {
+const SearchResult: React.FC<SearchResultProps> = ({ result }) => {
   const displayContent = result.highlights?.content || result.content;
   const displayTitle = result.highlights?.title || result.title;
   
@@ -114,7 +113,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ results, isLoading
     <div className="w-full max-w-2xl mx-auto">
       <div className="flex flex-col gap-2">
         {results.map((result) => (
-          <SearchResult key={result.id} result={result} query={query} />
+          <SearchResult key={result.id} result={result} />
         ))}
       </div>
     </div>
