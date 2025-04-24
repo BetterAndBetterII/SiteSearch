@@ -1,0 +1,357 @@
+{
+
+"AA": {"full_name": "Academic Advisor", "translation": "学术导师", "remarks": ""},
+
+"ABE": {"full_name": "Administration Building East", "translation": "行政楼东翼", "remarks": ""},
+
+"ABW": {"full_name": "Administration Building West", "translation": "行政楼西翼", "remarks": ""},   
+
+"ACT": {"full_name": "Accounting", "translation": "会计学", "remarks": ""},
+
+"AED": {"full_name": "Automated External Defibrillator", "translation": "自动体外除颤仪", "remarks": "用于抢救心脏骤停病人的便携式急救设备"},
+
+"AO": {"full_name": "Admission Office", "translation": "招生办公室", "remarks": ""},
+
+"APA": {"full_name": "American Psychological Association", "translation": "英文学术引用格式", "remarks": ""},
+
+"ASO": {"full_name": "Administrative Services Office", "translation": "行政事务处", "remarks": ""},
+
+"AVP": {"full_name": "Associate Vice President", "translation": "协理副校长", "remarks": ""},
+
+"AY": {"full_name": "Academic Year", "translation": "学年", "remarks": ""},
+
+"BB": {"full_name": "BlackBoard", "translation": "线上学习平台", "remarks": ""},
+
+"BIM": {"full_name": "Bioinformatics", "translation": "生物信息学", "remarks": ""},
+
+"BIO": {"full_name": "Biology", "translation": "生物学", "remarks": ""},
+
+"Bldg": {"full_name": "Building", "translation": "楼", "remarks": ""},
+
+"BME": {"full_name": "Biomedical Science and Engineering", "translation": "生物医学工程", "remarks": ""},
+
+"CBS": {"full_name": "Copenhagen Business School", "translation": "哥本哈根商学院", "remarks": "与我校有合作项目"},
+
+"CCP": {"full_name": "Coco Park", "translation": "校园周边的商场", "remarks": ""},
+
+"CD": {"full_name": "Chengdao Building", "translation": "诚道楼", "remarks": ""},
+
+"CE": {"full_name": "Civic Education or Computer Engineering", "translation": "国情教育或计算机工程", "remarks": "政治课或计算机工程专业"},
+
+"CEC": {"full_name": "Civic Education Center", "translation": "国情教育中心", "remarks": "政治课"},
+
+"CGPA": {"full_name": "Cumulative GPA", "translation": "累计平均绩点", "remarks": ""},
+
+"CHI": {"full_name": "Chinese", "translation": "中文课", "remarks": ""},
+
+"CHM": {"full_name": "Chemistry", "translation": "化学课", "remarks": ""},
+
+"CIDE": {"full_name": "Center for Innovation Design and Entrepreneurship", "translation": "创新创意创业中心", "remarks": ""},
+
+"CLC": {"full_name": "Chinese Language and Culture", "translation": "外籍学生中文课程", "remarks": ""},
+
+"CP": {"full_name": "Cheating Paper", "translation": "可以带进考场的记录知识点的纸", "remarks": ""},
+
+"CPDO": {"full_name": "Career Planning and Development Office", "translation": "职业规划与发展处", "remarks": ""},
+
+"CPRO": {"full_name": "Communications and Public Relations Office", "translation": "传讯及公共关系处", "remarks": ""},
+
+"CS": {"full_name": "Computer Science", "translation": "计算机科学与技术专业", "remarks": ""},
+
+"CSC": {"full_name": "Computer Science", "translation": "计算机课程", "remarks": ""},
+
+"CSE": {"full_name": "Computer Science and Engineering", "translation": "计算机科学与技术专业", "remarks": ""},
+
+"CUHK": {"full_name": "The Chinese University of Hong Kong", "translation": "香港中文大学", "remarks": ""},
+
+"CUHKSZ": {"full_name": "The Chinese University of Hong Kong, Shenzhen", "translation": "香港中文大学(深圳)", "remarks": ""},
+
+"DDA": {"full_name": "Data and Decision Analytics", "translation": "数据与决策分析课程", "remarks": ""},
+
+"DDL": {"full_name": "Deadline", "translation": "截止日期", "remarks": ""},
+
+"DILIGENTIA": {"full_name": "Diligentia College", "translation": "学勤书院", "remarks": ""},
+
+"DMS": {"full_name": "Decision and Management Sciences", "translation": "决策与管理科学课程", "remarks": ""},
+
+"DPF": {"full_name": "Distinction/Pass/Failure", "translation": "一些只记作及格或不及格的课程的考评方式,不计入GPA", "remarks": ""},
+
+"Dr.": {"full_name": "Doctor", "translation": "博士", "remarks": ""},
+
+"DS": {"full_name": "Data Science", "translation": "数据科学与大数据技术专业", "remarks": ""},
+
+"DSBDT": {"full_name": "Data Science and Big Data Technology", "translation": "数据科学与大数据技术专业", "remarks": ""},
+
+"EBP": {"full_name": "English Bridge Program", "translation": "基础英语", "remarks": "大一上学期英语课"},
+
+"ECE": {"full_name": "Electrical and Computer Engineering", "translation": "电子与计算机工程专业", "remarks": ""},
+
+"ECO": {"full_name": "Economics", "translation": "经济学课程或经济学专业", "remarks": ""},
+
+"EE": {"full_name": "Electronic Engineering", "translation": "电子工程专业", "remarks": ""},
+
+"EIE": {"full_name": "Electronic Information Engineering", "translation": "电子信息工程课程或电子信息工程专业", "remarks": ""},
+
+"ENG": {"full_name": "English", "translation": "英语课", "remarks": ""},
+
+"ENL": {"full_name": "English for Language Students", "translation": "英语专业的英语课", "remarks": ""},
+
+"EPC": {"full_name": "English Pre-sessional Course", "translation": "暑期英文先修班", "remarks": ""},
+
+"ERG": {"full_name": "General Engineering courses", "translation": "理工学院的介绍类课程", "remarks": ""},
+
+"FE": {"full_name": "Financial Engineering", "translation": "金融工程专业", "remarks": ""},
+
+"FIN": {"full_name": "Finance", "translation": "金融学课程", "remarks": ""},
+
+"FMA": {"full_name": "Financial Mathematics", "translation": "金融数学课程", "remarks": ""},
+
+"FTE": {"full_name": "Fintech", "translation": "金融科技", "remarks": "金融工程专业的专修方向之一"},
+
+"GE": {"full_name": "General Education", "translation": "通识课", "remarks": ""},
+
+"GEA": {"full_name": "GE Areas: Area A", "translation": "通识选修范围A:中华文化传承", "remarks": ""},
+
+"GEB": {"full_name": "GE Areas: Area B", "translation": "通识选修范围B:自然、科学与科技", "remarks": ""},
+
+"GEC": {"full_name": "GE Areas: Area C", "translation": "通识选修范围C:社会与文化", "remarks": ""},
+
+"GED": {"full_name": "GE Areas: Area D", "translation": "通识选修范围D:自我与人文", "remarks": ""},
+
+"GER": {"full_name": "German", "translation": "德语课", "remarks": ""},
+
+"GFH": {"full_name": "GE Foundation: Humanity", "translation": "通识基础课", "remarks": ""},
+
+"GFN": {"full_name": "GE Foundation: Nature", "translation": "通识基础课", "remarks": ""},
+
+"GMAT": {"full_name": "Graduate Management Admission Test", "translation": "经企管理研究生入学考试", "remarks": ""},
+
+"GPA": {"full_name": "Grade Point Average", "translation": "平均绩点", "remarks": ""},
+
+"GRE": {"full_name": "Graduate Record Examination", "translation": "留学研究生入学考试", "remarks": ""},
+
+"GSCLM": {"full_name": "Global Supply Chain and Logistics Management", "translation": "环球供应链与物流管理专业", "remarks": "合作项目"},
+
+"HARMONIA": {"full_name": "Harmonia College", "translation": "祥波书院", "remarks": ""},
+
+"HSS": {"full_name": "School of Humanity and Social Science", "translation": "人文社科学院", "remarks": ""},
+
+"ITSO": {"full_name": "Information Technology Services Office", "translation": "资讯科技服务处", "remarks": ""},
+
+"LEC": {"full_name": "Lecture", "translation": "正课", "remarks": ""},
+
+"LGU": {"full_name": "Longgang University", "translation": "龙岗大学", "remarks": "学生之间的别称"},
+
+"LHS": {"full_name": "School of Life and Health Science", "translation": "生命健康科学学院", "remarks": ""},
+
+"LING": {"full_name": "Ling College", "translation": "道扬书院", "remarks": ""},
+
+"LT": {"full_name": "Letian Building", "translation": "乐天楼", "remarks": ""},
+
+"MAT": {"full_name": "Mathematics", "translation": "数学", "remarks": ""},
+
+"MED": {"full_name": "School of Medicine", "translation": "医学院", "remarks": ""},
+
+"MGPA": {"full_name": "Major GPA", "translation": "主修课程平均绩点", "remarks": ""},
+
+"MGT": {"full_name": "Management", "translation": "管理学", "remarks": ""},
+
+"Mid": {"full_name": "Midterm Exam", "translation": "期中考试", "remarks": ""},
+
+"MINERVA": {"full_name": "Minerva College", "translation": "厚含书院", "remarks": ""},
+
+"MKT": {"full_name": "Marketing", "translation": "市场营销课程或市场营销专业", "remarks": ""},
+
+"MS": {"full_name": "Microsoft", "translation": "办公软件", "remarks": ""},
+
+"MU": {"full_name": "Music Union", "translation": "聚乐部", "remarks": "社团"},
+
+"MUS": {"full_name": "Music or Music Union", "translation": "音乐课或音乐社团", "remarks": ""},
+
+"MUSE": {"full_name": "Muse College", "translation": "思廷书院", "remarks": ""},
+
+"OAL": {"full_name": "Office of Academic Links", "translation": "学术交流处", "remarks": ""},
+
+"OCTE": {"full_name": "The Online Course and Teaching Evaluation", "translation": "课程评教", "remarks": ""},
+
+"OSA": {"full_name": "Office of Student Affairs", "translation": "学生事务处", "remarks": ""},
+
+"P/U": {"full_name": "Pass/Failure", "translation": "一些只记作及格或不及格的课程的考评方式,不计入GPA", "remarks": "P:及格;F:不及格"},
+
+"PED": {"full_name": "Physical Education", "translation": "体育课", "remarks": ""},
+
+"PEU": {"full_name": "Physical Education Unit", "translation": "体育部", "remarks": ""},
+
+"PF": {"full_name": "Pass/Failure", "translation": "一些只记作及格或不及格的课程的考评方式,不计入GPA", "remarks": "P:及格;F:不及格"},
+
+"PHD": {"full_name": "Philosophy Doctor", "translation": "哲学博士", "remarks": ""},
+
+"PHI": {"full_name": "Philosophy", "translation": "哲学课程", "remarks": ""},
+
+"PHY": {"full_name": "Physics", "translation": "物理课程", "remarks": ""},
+
+"PO": {"full_name": "President's Office", "translation": "校长办公室", "remarks": ""},
+
+"Pre": {"full_name": "Presentation", "translation": "公开演讲", "remarks": "文科课程的考核形式"},
+
+"Prof.": {"full_name": "Professor", "translation": "教授", "remarks": ""},
+
+"PSY": {"full_name": "Psycology", "translation": "心理学专业", "remarks": ""},
+
+"RA": {"full_name": "Research A Building or Researching Assistant", "translation": "实验楼A或研究助理", "remarks": ""},
+
+"RB": {"full_name": "Research B Building", "translation": "实验楼B", "remarks": ""},
+
+"RJ": {"full_name": "Reflective Journal", "translation": "反思日志", "remarks": "通识课的小论文作业"},
+
+"RMS": {"full_name": "Risk Management Science", "translation": "风险管理科学课程", "remarks": ""},  
+
+"SALL": {"full_name": "Self-Access Language Learning", "translation": "语言自学中心", "remarks": ""},
+
+"SCRSA": {"full_name": "Shaw College Resident Student Association", "translation": "逸夫宿生会", "remarks": ""},
+
+"SDF": {"full_name": "Self-Development Facilitator", "translation": "自我发展促进者", "remarks": ""},
+
+"SDS": {"full_name": "School of Data Science", "translation": "数据科学学院", "remarks": ""},
+
+"SHAW": {"full_name": "Shaw College", "translation": "逸夫书院", "remarks": ""},
+
+"SHCC": {"full_name": "Student Health and Counselling Centre", "translation": "学生健康辅导中心", "remarks": ""},
+
+"SIS": {"full_name": "Student Information System", "translation": "学生信息系统", "remarks": ""},
+
+"SMBU": {"full_name": "Shenzhen MSU-BIT University", "translation": "深圳北理莫斯科大学", "remarks": "位于我校对面"},
+
+"SME": {"full_name": "School of Management and Economics", "translation": "经管学院", "remarks": ""},
+
+"SR": {"full_name": "Staff Residence", "translation": "教职工宿舍", "remarks": ""},
+
+"SS": {"full_name": "Summer Session", "translation": "暑课", "remarks": ""},
+
+"SSE": {"full_name": "School of Science and Engineering", "translation": "理工学院", "remarks": ""},
+
+"STA": {"full_name": "Statistics", "translation": "统计学课程", "remarks": ""},
+
+"STAT": {"full_name": "Statistics", "translation": "统计学专业", "remarks": ""},
+
+"SU": {"full_name": "Student Union", "translation": "学生会", "remarks": ""},
+
+"TA": {"full_name": "Teaching Assistant", "translation": "助教", "remarks": ""},
+
+"TB": {"full_name": "Teaching B Building", "translation": "教学楼B", "remarks": ""},
+
+"TC": {"full_name": "Teaching C Building", "translation": "教学楼C", "remarks": ""},
+
+"TD": {"full_name": "Teaching D Building", "translation": "教学楼D", "remarks": ""},
+
+"TP": {"full_name": "Term Paper", "translation": "学期论文", "remarks": "通识课的大论文作业"},
+
+"TRA": {"full_name": "Traslation", "translation": "翻译课", "remarks": ""},
+
+"TUT": {"full_name": "Tutorial", "translation": "导修课", "remarks": "Pre、讨论"},
+
+"UAC": {"full_name": "University Art Center", "translation": "大学艺术中心", "remarks": ""},
+
+"UL": {"full_name": "University Library", "translation": "大学图书馆", "remarks": ""},
+
+"USTF": {"full_name": "Undergraduate Students Teaching Fellow", "translation": "本科生助教", "remarks": ""},
+
+"wl": {"full_name": "Workload", "translation": "课业负担", "remarks": ""},
+
+"ZR": {"full_name": "Zhiren Building", "translation": "志仁楼", "remarks": ""},
+
+"ZX": {"full_name": "Zhixin Building", "translation": "知新楼", "remarks": ""},
+
+"Add": {"full_name": "Add", "translation": "加课", "remarks": ""},
+
+"Argue": {"full_name": "Argue", "translation": "申诉", "remarks": "向教务处、教授、助教申诉成绩"},
+
+"Assignment": {"full_name": "Assignment", "translation": "作业", "remarks": ""},
+
+"Barick": {"full_name": "Barick", "translation": "钟子毅教授", "remarks": ""},
+
+"Coding": {"full_name": "Coding", "translation": "敲代码", "remarks": ""},
+
+"College": {"full_name": "College", "translation": "书院", "remarks": ""},
+
+"Dean's List": {"full_name": "Dean's List", "translation": "一种按照CGPA评选的荣誉", "remarks": ""},
+
+"Declare": {"full_name": "Declare", "translation": "申报", "remarks": ""},
+
+"Drop": {"full_name": "Drop", "translation": "退课", "remarks": ""},
+
+"Elective": {"full_name": "Elective", "translation": "选修课", "remarks": ""},
+
+"Enroll": {"full_name": "Enroll", "translation": "选课", "remarks": ""},
+
+"Essay": {"full_name": "Essay", "translation": "论文", "remarks": ""},
+
+"Exclusion": {"full_name": "Exclusion", "translation": "排除课", "remarks": "同类型课程相互排斥,不能都修读"},
+
+"Fail": {"full_name": "Fail", "translation": "不及格,挂科", "remarks": ""},
+
+"Final": {"full_name": "Final", "translation": "期末考试", "remarks": ""},
+
+"Gap Year": {"full_name": "Gap Year", "translation": "休学一年", "remarks": ""},
+
+"Instructor": {"full_name": "Instructor", "translation": "教授", "remarks": ""},
+
+"Killer": {"full_name": "Killer", "translation": "给分严格的教授", "remarks": ""},
+
+"Kimo": {"full_name": "Kimo", "translation": "一位认真负责的大一英语课教授", "remarks": ""},
+
+"Late Drop": {"full_name": "Late Drop", "translation": "逾期退课", "remarks": ""},
+
+"LGU3": {"full_name": "LGU3", "translation": "非官方校园公众号", "remarks": ""},
+
+"Lgulife": {"full_name": "Lgulife", "translation": "非官方校园论坛", "remarks": ""},
+
+"Major": {"full_name": "Major", "translation": "主修课程", "remarks": ""},
+
+"Major Elective": {"full_name": "Major Elective", "translation": "主修选修课程", "remarks": ""},
+
+"Major Required": {"full_name": "Major Required", "translation": "主修必修课程", "remarks": ""},
+
+"Minor": {"full_name": "Minor", "translation": "辅修课程", "remarks": ""},
+
+"Office Hour": {"full_name": "Office Hour", "translation": "教授在课外答疑的时间段", "remarks": ""},
+
+"Peer Evaluation": {"full_name": "Peer Evaluation", "translation": "小组内部互相打分", "remarks": ""},
+
+"Peer Pressure": {"full_name": "Peer Pressure", "translation": "同年级竞争压力", "remarks": ""},
+
+"Prerequisite": {"full_name": "Prerequisite", "translation": "先修课", "remarks": "一些高阶课程对低阶课程的要求"},
+
+"Project": {"full_name": "Project", "translation": "项目作业", "remarks": "作业类型之一"},
+
+"Registry": {"full_name": "Registry", "translation": "教务处", "remarks": ""},
+
+"Report": {"full_name": "Report", "translation": "研究报告", "remarks": "作业类型之一"},
+
+"School": {"full_name": "School", "translation": "学院", "remarks": ""},
+
+"School Package": {"full_name": "School Package", "translation": "学院课程", "remarks": ""},
+
+"Section": {"full_name": "Section", "translation": "课程的节次", "remarks": ""},
+
+"Study Scheme": {"full_name": "Study Scheme", "translation": "修读计划", "remarks": ""},
+
+"Swap": {"full_name": "Swap", "translation": "换课", "remarks": ""},
+
+"Syllabus": {"full_name": "Syllabus", "translation": "课程大纲", "remarks": ""},
+
+"Target Students": {"full_name": "Target Students", "translation": "目标学生", "remarks": "一些课程仅供特定年级、专业的学生选择"},
+
+"Transcript": {"full_name": "Transcript", "translation": "成绩单", "remarks": ""},
+
+"Transfer": {"full_name": "Transfer", "translation": "转学", "remarks": "特指转学到美本"},
+
+"U-Core": {"full_name": "U-Core", "translation": "大学核心课程", "remarks": ""},
+
+"Unit": {"full_name": "Unit", "translation": "学分", "remarks": ""},
+
+"University": {"full_name": "University", "translation": "大学", "remarks": ""},
+
+"Zoom": {"full_name": "Zoom", "translation": "用来上网课、开会的平台", "remarks": "类似腾讯会议"}
+
+}

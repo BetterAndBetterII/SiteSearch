@@ -257,17 +257,18 @@ def execute_crawl_policy(request, site_id, policy_id):
         }
         
         # 创建爬取任务
-        task_id = manager.create_crawl_task(
-            start_urls=policy.start_urls,
-            site_id=site_id,
-            max_urls=policy.max_urls,
-            max_depth=policy.max_depth,
-            url_patterns=policy.url_patterns,
-            exclude_patterns=policy.exclude_patterns,
-            crawler_workers=crawler_workers,
-            crawler_type=policy.crawler_type,
-            crawler_config=policy.advanced_config
-        )
+        task_ids = []
+        for start_url in policy.start_urls:
+            task_id = manager.create_crawl_task(
+                start_url=start_url,
+                site_id=site_id,
+                max_urls=policy.max_urls,
+                max_depth=policy.max_depth,
+                regpattern=policy.url_patterns[0] if policy.url_patterns else '*',
+                crawler_workers=crawler_workers,
+                crawler_type=policy.crawler_type,
+            )
+            task_ids.append(task_id)
         
         # 更新策略的最后执行时间
         from django.utils import timezone
@@ -276,7 +277,7 @@ def execute_crawl_policy(request, site_id, policy_id):
         
         return JsonResponse({
             'success': True,
-            'task_id': task_id,
+            'task_ids': task_ids,
             'policy_id': policy_id,
             'site_id': site_id,
             'message': f'已开始执行爬取策略: {policy.name}'

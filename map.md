@@ -67,29 +67,28 @@ SiteSearch/
 ```
 用户 ──→ Web界面(Django + Daphne ASGI)
             │
-            └─ 配置站点 (正则/前缀匹配)
-                         │
-                         ▼
-         多进程管理器(MultiProcessSiteSearchManager)
-             /      |       |       \
-            /       |       |        \
-           ▼        ▼       ▼         ▼
-    爬虫Handler  清洗Handler  存储Handler  索引Handler
-    (并行进程)   (并行进程)   (并行进程)   (并行进程)
-           |        |        |          |
-           ▼        ▼        ▼          ▼
-  URL队列  →  爬取队列  →  清洗队列  →  索引队列
-  (Redis)    (Redis)    (Redis)     (Redis)
-           |        |        |          |
-           ▼        ▼        ▼          ▼
-    爬取内容    格式化文本   PostgreSQL    Milvus向量库
-                                      /    \
-                                     /      \
-                                    ▼        ▼
-                               搜索端点     RAG接口
-                                    │        │
-                                    ▼        ▼
-                              文本搜索     语义问答
+            ├─ 配置站点 (正则/前缀匹配)                  ┌──> 语义问答接口 ──┐
+            │            │                            │                   │
+            │            ▼                            │                   ▼
+            │  多进程管理器(MultiProcessSiteSearchManager) │          Agent 智能问答
+            │      /      |       |       \           │          /    │    \
+            │     /       |       |        \          │         /     │     \
+            │    ▼        ▼       ▼         ▼         │        ▼      ▼      ▼
+            │爬虫Handler 清洗Handler 存储Handler 索引Handler  │   Optimizer Analyzer 多轮对话
+            │(并行进程)  (并行进程)  (并行进程)  (并行进程)   │   (提示词优化)(查询分析)(深度思考)
+            │    |        |        |          |        │        │      │       │
+            │    ▼        ▼        ▼          ▼        │        │      │       │
+            │URL队列 → 爬取队列 → 清洗队列 → 索引队列────┘        │      │       │
+            │(Redis)   (Redis)   (Redis)    (Redis)            │      │       │
+            │    |        |        |          |                 │      │       │
+            │    ▼        ▼        ▼          ▼                 │      │       │
+            │爬取内容   格式化文本  PostgreSQL  Milvus向量库 ─────┼──────┘       │
+            │                                /    \            │              │
+            │                               /      \           │              │
+            └───────────────────────→ 搜索端点      RAG接口 ────┘              │
+                                       │                                     │
+                                       ▼                                     │
+                                    文本搜索 ─────────────────────────────────┘
 ```
 
 ## 三、开发指南
@@ -207,6 +206,8 @@ manager.start_monitoring()
 - **数据清洗**: MarkdownConverter
 - **数据库**: PostgreSQL
 - **索引与搜索**: Llama-index, Redis(Doc), Milvus(Vector)
+- **AI问答**: OpenAI API, GPT-4o/GPT-4o-mini, Optimizer, Analyzer
+- **多轮对话**: 上下文管理, 深度思考, RAG技术
 - **部署与扩展**: Docker, Docker Compose, Docker Swarm
 
 ## 五、具体实施步骤
@@ -705,31 +706,202 @@ manager.start_monitoring()
         3. `POST /api/system/queue/{queue_name}/clear/` - 清空指定队列
         4. `GET /api/system/logs/` - 获取系统日志
 
-8. **前端实现**
+8. **AI Agent实现**
+   - 8.1 实现基于Optimizer的提示词优化器
+     - 自动识别专业术语和缩写并提供解释
+     - 基于hint_table.json的提示词数据库
+     - 添加专业术语上下文增强理解
+     - 核心接口设计
+       ```python
+       class Optimizer:
+         - __init__()                                    # 初始化优化器
+         - _get_hint(message: str) -> str                # 从信息中提取关键词并生成提示
+         - optimize(message: list[ChatCompletionMessageParam]) -> str  # 优化消息列表
+       ```
+     - 优化过程
+       ```
+       1. 从用户消息中识别专业术语
+       2. 查找hint_table中对应术语的详细解释
+       3. 生成包含中英文对照和上下文的提示信息
+       4. 将提示信息添加到AI系统提示中
+       ```
+
+   - 8.2 实现基于Analyzer的查询分析器
+     - 实现五种分析模式：关键词提取、多角度查询、问题分解、回溯思考和上下文分析
+     - 每种分析模式使用特定的提示词模板
+     - 实现并行分析处理以提高效率
+     - 核心接口设计
+       ```python
+       class Analyzer:
+         - __init__(openai_client)                        # 初始化分析器
+         - analyze(messages, prompt, item_count) -> list  # 执行特定类型的分析
+         - analyze_kmds(message) -> list                  # 并行执行关键词、多查询、分解和回溯分析
+         - analyze_context(message) -> list               # 分析上下文，生成上下文查询
+       ```
+     - 分析模板枚举
+       ```python
+       class AnalyzerPrompt(Enum):
+         - CONTEXT_PROMPT    # 上下文查询提示
+         - KEYWORDS_PROMPT   # 关键词提取提示
+         - MULTY_QUERY_PROMPT  # 多角度查询提示
+         - DECOMPOSITION_PROMPT # 问题分解提示
+         - STEP_BACK_PROMPT  # 回溯思考提示
+       ```
+
+   - 8.3 实现Agent核心逻辑
+     - 实现消息管理和模型交互
+     - 支持工具调用和流式响应
+     - 添加多轮对话和深度思考能力
+     - 核心接口设计
+       ```python
+       class Agent:
+         - __init__(openai_client)                         # 初始化Agent
+         - build_message(messages, related_messages) -> list  # 构建消息列表并控制token使用
+         - run(messages, context) -> AsyncGenerator         # 基础问答流程
+         - run_deep(messages, context) -> AsyncGenerator    # 深度思考流程
+         - run_query(query, keywords, context) -> QueryResult  # 执行知识库查询
+         - run_query_batch(main_queries, sub_queries, context) -> QueryResult  # 批量执行查询
+       ```
+     - 问答流程
+       ```
+       1. 用户提问 → 构建系统消息和上下文
+       2. 首次调用LLM生成初步回答和工具调用
+       3. 执行工具调用(知识库查询)获取相关信息
+       4. 将查询结果融入上下文
+       5. 再次调用LLM生成最终答案
+       6. 返回答案和参考资料
+       ```
+     - 深度思考流程
+       ```
+       1. 用户提问 → 分析器分解问题
+       2. 执行多角度、多关键词批量查询
+       3. 获取初步信息后开始多轮推理
+       4. 动态决定是否需要进一步调查特定资料
+       5. 通过反复思考和信息收集生成全面答案
+       6. 返回答案和完整参考资料
+       ```
+
+   - 8.4 实现查询结果处理
+     - 设计统一的QueryResult数据结构
+     - 实现Reference处理和展示
+     - 添加排序和去重逻辑
+     - 数据结构设计
+       ```python
+       @dataclass
+       class QueryResult:
+         - query: str                      # 查询内容
+         - node_text: str                  # 节点文本
+         - results: List[CrawlerResult]    # 爬虫结果列表
+         - nodes: Optional[List[NodeWithScore]] = None  # 可选的节点列表
+         
+         @staticmethod
+         def from_multi_results(query_result_objs) -> "QueryResult"  # 合并多个查询结果
+       
+       @dataclass
+       class Reference:
+         - mimetype: str                   # 媒体类型
+         - preview_url: str                # 预览URL
+         - source: str                     # 来源
+         - title: str                      # 标题
+         - description: str                # 描述
+         
+         @staticmethod
+         def from_crawler_result(crawler_result) -> "Reference"  # 从爬虫结果创建引用
+       ```
+
+   - 8.5 添加流式响应和前端集成
+     - 实现基于AsyncGenerator的流式回复
+     - 支持内容块、工具调用和引用的流式传输
+     - 添加进度指示和中间结果展示
+     - 流式响应格式
+       ```json
+       {
+         "delta": {
+           "role": "assistant",           // 角色信息(仅在第一个delta出现)
+           "content": "回复内容片段",      // 内容片段
+           "tool_calls": [{               // 工具调用信息(如果有)
+             "id": "调用ID",
+             "type": "function",
+             "function": {
+               "name": "函数名",
+               "arguments": "函数参数"
+             }
+           }],
+           "references": [{               // 引用信息(仅在返回参考资料时出现)
+             "title": "标题",
+             "preview_url": "URL",
+             "source": "来源",
+             "description": "描述"
+           }]
+         }
+       }
+       ```
+
+   - 8.6 实现上下文管理和会话记录
+     - 设计会话上下文结构
+     - 实现消息过滤和历史压缩
+     - 添加会话状态和结果持久化
+     - 上下文管理
+       ```python
+       # 会话上下文结构
+       {
+         "user_id": "用户ID",
+         "messages": [所有消息历史],
+         "question": "当前问题",
+         "query": "执行的查询",
+         "nodes": [相关知识点],
+         "score": 匹配分数,
+         "answer": "生成的答案"
+       }
+       
+       # UserRecord模型保存会话记录
+       class UserRecord:
+         - user_id: 用户ID
+         - messages: 消息历史
+         - question: 问题
+         - query: 查询
+         - nodes: 节点列表
+         - score: 分数
+         - answer: 答案
+       ```
+
+9. **前端实现**
    - 技术栈：React, tailwindcss, shadcn/ui, radix-ui, lucide-react, ndjson, react-markdown, katex
-   - 8.1 设计用户界面原型
+   - 9.1 设计用户界面原型
      - 站点配置页面
      - 爬取监控页面
      - 搜索结果页面
-   - 8.2 实现基于 Django 模板的前端
+     - AI 对话页面
+   - 9.2 实现基于 Django 模板的前端
      - 响应式布局，支持移动设备
      - 实时进度展示（WebSocket）
-   - 8.3 添加搜索结果高亮和分页
-   - 8.4 实现站点配置表单和验证
-   - 8.5 添加前端单元测试
-   - 8.6 优化加载性能和用户体验
+   - 9.3 添加搜索结果高亮和分页
+   - 9.4 实现站点配置表单和验证
+   - 9.5 实现AI对话界面
+     - 支持流式响应显示
+     - 实现打字机效果
+     - 集成Markdown渲染
+     - 添加参考资料展示
+     - 实现聊天历史浏览
+   - 9.6 实现智能搜索/深度思考切换
+     - 快速搜索模式UI
+     - 深度思考模式UI
+     - 流程进度指示器
+     - 搜索结果展示组件
+   - 9.7 添加前端单元测试
+   - 9.8 优化加载性能和用户体验
 
-9. **集成测试与部署**
-   - 9.1 编写端到端测试流程
-   - 9.2 实现 CI/CD 管道（GitHub Actions）
-   - 9.3 配置生产环境部署脚本
-   - 9.4 添加监控和告警系统（Prometheus + Grafana）
-   - 9.5 编写用户文档和开发者文档
-   - 9.6 执行安全审计和性能测试
+10. **集成测试与部署**
+   - 10.1 编写端到端测试流程
+   - 10.2 实现 CI/CD 管道（GitHub Actions）
+   - 10.3 配置生产环境部署脚本
+   - 10.4 添加监控和告警系统（Prometheus + Grafana）
+   - 10.5 编写用户文档和开发者文档
+   - 10.6 执行安全审计和性能测试
 
-10. **优化与扩展**
-    - 10.1 优化爬虫性能和资源利用
-    - 10.2 改进搜索质量和相关性
-    - 10.3 添加更多数据源支持（PDF, DOC 等）
-    - 10.4 实现多语言支持
-    - 10.5 添加用户反馈和搜索分析功能
+11. **优化与扩展**
+    - 11.1 优化爬虫性能和资源利用
+    - 11.2 改进搜索质量和相关性
+    - 11.3 添加更多数据源支持（PDF, DOC 等）
+    - 11.4 实现多语言支持
+    - 11.5 添加用户反馈和搜索分析功能

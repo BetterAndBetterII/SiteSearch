@@ -16,32 +16,8 @@ import xml.etree.ElementTree as ET
 import threading
 
 from .base_crawler import BaseCrawler
-
-PLAIN_TEXT_MIMETYPES = [
-    "text/plain",
-    "text/csv",
-    "text/xml",
-    "text/javascript",
-    "text/css",
-]
-
-BINARY_MIMETYPES = [
-    "image/png",
-    "image/jpeg",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-    "application/pdf",
-    "application/octet-stream",
-    # docx, ppt, xlsx, zip, etc.
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/zip",
-    "application/x-zip-compressed",
-    "application/x-7z-compressed",
-    
-]
+from ..handler.base_handler import SkipError
+from ..utils.mime import PLAIN_TEXT_MIMETYPES, BINARY_MIMETYPES
 
 # 配置日志
 logger = logging.getLogger('httpx_worker')
@@ -198,6 +174,7 @@ class HttpxWorker(BaseCrawler):
         Returns:
             Dict[str, Any]: 包含页面内容和元数据的字典
         """
+        url = self.normalize_url(url)
         result = {
             "url": url,
             "content": "",
@@ -222,14 +199,13 @@ class HttpxWorker(BaseCrawler):
             content_type = response.headers.get('content-type', 'text/html')
             result["mimetype"] = content_type
 
-            if content_type in PLAIN_TEXT_MIMETYPES:
+            if any(content_type.startswith(mimetype) for mimetype in PLAIN_TEXT_MIMETYPES):
                 result["content"] = response.text
                 result["links"] = self.get_related_links(url, response)
-            elif content_type in BINARY_MIMETYPES:
+            elif any(content_type.startswith(mimetype) for mimetype in BINARY_MIMETYPES):
                 result["content"] = response.content
             else:
-                result["content"] = response.text
-                result["links"] = self.get_related_links(url, response)
+                raise SkipError(f"不支持的内容类型: {content_type}")
 
             # 提取域名作为source
             domain = urlparse(url).netloc
@@ -254,7 +230,12 @@ class HttpxWorker(BaseCrawler):
             result["metadata"] = metadata
             
             # 计算内容哈希值，可用于比较内容是否变化
-            result["content_hash"] = hashlib.sha256(result["content"].encode()).hexdigest()
+            if isinstance(result["content"], str):
+                result["content_hash"] = hashlib.sha256(result["content"].encode()).hexdigest()
+            elif isinstance(result["content"], bytes):
+                result["content_hash"] = hashlib.sha256(result["content"]).hexdigest()
+            else:
+                raise SkipError(f"不支持的内容类型: {type(result['content'])}")
             
             return result
         
@@ -272,7 +253,7 @@ class HttpxWorker(BaseCrawler):
         except Exception as e:
             logger.error(f"未知错误 {url}: {str(e)}")
             result["error"] = f"未知错误: {str(e)}"
-            raise
+            raise e
     
     def discover_sitemap(self) -> List[str]:
         """

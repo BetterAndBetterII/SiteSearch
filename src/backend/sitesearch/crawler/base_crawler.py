@@ -59,7 +59,6 @@ class BaseCrawler:
         初始化爬虫
         
         Args:
-            base_url: 起始URL，爬虫将从这个URL开始爬取
             max_urls: 最大爬取URL数量
             max_depth: 最大爬取深度
             request_delay: 每次请求之间的延迟（秒）
@@ -73,13 +72,6 @@ class BaseCrawler:
             follow_redirects: 是否跟随重定向
             on_page_crawled: 当页面爬取完成时的回调函数
         """
-        # 验证和规范化base_url
-        parsed = urlparse(base_url)
-        if not parsed.scheme:
-            base_url = f"http://{base_url}"
-        if not base_url.endswith('/'):
-            base_url = f"{base_url}/"
-        
         self.base_url = base_url
         self.max_urls = max_urls
         self.max_depth = max_depth
@@ -126,12 +118,6 @@ class BaseCrawler:
             url = url.split('#')[0]
             if not url:
                 return False
-        
-        # 排除外部链接（不在base_url域名下的链接）
-        base_domain = urlparse(self.base_url).netloc
-        url_domain = parsed.netloc
-        if url_domain and url_domain != base_domain:
-            return False
         
         # 检查是否匹配包含模式（如果有）
         if self.included_patterns:

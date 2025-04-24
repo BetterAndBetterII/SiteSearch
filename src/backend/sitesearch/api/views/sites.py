@@ -78,6 +78,10 @@ def site_list(request):
             if Site.objects.filter(id=data['id']).exists():
                 return JsonResponse({'error': f'站点ID已存在: {data["id"]}'}, status=400)
             
+            # 站点ID只能包含数字、字母和下划线
+            if not re.match(r'^[a-zA-Z0-9_]+$', data['id']):
+                return JsonResponse({'error': '站点ID只能包含数字、字母和下划线'}, status=400)
+            
             # 创建站点
             site = Site(
                 id=data['id'],
@@ -201,16 +205,13 @@ def site_status(request, site_id):
         
         # 获取站点相关的队列状态
         queues = {}
-        for queue_name in ["crawl", "clean", "index"]:
-            queue_metrics = manager.get_queue_metrics(queue_name, site_id=site_id)
+        for queue_name in ["crawler", "cleaner", "storage"]:
+            queue_metrics = manager.get_queue_metrics(queue_name)
             if queue_metrics:
                 queues[queue_name] = queue_metrics
         
-        # 获取站点相关的任务状态
-        tasks = manager.get_site_tasks(site_id)
-        
         # 获取站点相关的工作进程状态
-        workers = manager.get_site_workers(site_id)
+        workers = manager.get_workers_count()
         
         # 构建响应
         status = {
@@ -220,7 +221,6 @@ def site_status(request, site_id):
             'last_crawl_time': site.last_crawl_time.isoformat() if site.last_crawl_time else None,
             'total_documents': site.total_documents,
             'queues': queues,
-            'tasks': tasks,
             'workers': workers
         }
         

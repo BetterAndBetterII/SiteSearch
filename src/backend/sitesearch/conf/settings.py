@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 项目应用
     'src.backend.sitesearch.storage',
+    'src.backend.sitesearch.api',
 ]
 
 MIDDLEWARE = [
@@ -100,7 +101,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': 'INFO',
     },
 }
 

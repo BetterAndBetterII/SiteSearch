@@ -1,5 +1,5 @@
 import os
-import hashlib
+import re
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -61,6 +61,9 @@ class DataIndexer:
         """
         self.site_id = site_id
         self.redis_namespace = f"sitesearch:{site_id}:docs"
+        # collection name can only contain numbers, letters and underscores
+        if not re.match(r'^[a-zA-Z0-9_]+$', site_id):
+            site_id = re.sub(r'[^a-zA-Z0-9_]', '_', site_id)
         self.milvus_collection = f"sitesearch_{site_id}_vectors"
         
         # 解析URIs
@@ -136,7 +139,7 @@ class DataIndexer:
             
             # 创建Document对象
             doc = Document(
-                text=doc_data['content'],
+                text=doc_data['clean_content'],
                 id_=doc_id,
                 metadata={
                     "site_id": self.site_id,

@@ -13,7 +13,8 @@ class IndexerHandler(BaseHandler):
     def __init__(self, 
                  redis_url: str,
                  milvus_uri: str,
-                 input_queue: str = "index",
+                 component_type: str,
+                 input_queue: str = "storage",
                  handler_id: str = None,
                  batch_size: int = 20,
                  sleep_time: float = 0.1,
@@ -32,6 +33,7 @@ class IndexerHandler(BaseHandler):
         """
         super().__init__(
             redis_url=redis_url,
+            component_type=component_type,
             input_queue=input_queue,
             output_queue=None,  # 索引是最后一步，不需要输出队列
             handler_id=handler_id,
@@ -46,6 +48,8 @@ class IndexerHandler(BaseHandler):
         self.storage = DataStorage()
         self.logger = logging.getLogger(f"IndexerHandler:{self.handler_id}")
         self.logger.setLevel(logging.WARNING)
+
+        print(f"索引器初始化完成，监听队列：{self.input_queue}")
     
     def get_indexer(self, site_id: str):
         """获取指定站点的索引器实例"""

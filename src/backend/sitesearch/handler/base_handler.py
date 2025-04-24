@@ -26,6 +26,7 @@ class BaseHandler(ABC):
     
     def __init__(self, 
                  redis_url: str,
+                 component_type: str,
                  input_queue: str,
                  output_queue: Optional[str] = None,
                  handler_id: str = None,
@@ -47,10 +48,10 @@ class BaseHandler(ABC):
         self.redis_url = redis_url
         self.redis_client = redis.from_url(redis_url)
         self.input_queue = f"sitesearch:queue:{input_queue}"
-        self.processing_queue = f"sitesearch:processing:{input_queue}"
-        self.completed_queue = f"sitesearch:completed:{input_queue}"
-        self.failed_queue = f"sitesearch:failed:{input_queue}"
-        self.processing_times = f"sitesearch:processing_times:{input_queue}"
+        self.processing_queue = f"sitesearch:processing:{component_type}"
+        self.completed_queue = f"sitesearch:completed:{component_type}"
+        self.failed_queue = f"sitesearch:failed:{component_type}"
+        self.processing_times = f"sitesearch:processing_times:{component_type}"
         
         self.output_queue = f"sitesearch:queue:{output_queue}" if output_queue else None
         self.handler_id = handler_id or f"{self.__class__.__name__}-{os.getpid()}"
@@ -82,7 +83,7 @@ class BaseHandler(ABC):
         
         # 任务处理回调，用于测试
         self.task_callback: Optional[Callable[[str, Dict[str, Any], bool], None]] = None
-    
+
     @abstractmethod
     async def process_task(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -129,7 +130,7 @@ class BaseHandler(ABC):
         except Exception as e:
             error = str(e)
             self.stats["tasks_failed"] += 1
-            self.logger.exception(f"处理任务 {task_id} 时发生错误: {error}")
+            self.logger.exception(f"worker：{self.handler_id} 处理任务 {task_id} 时发生错误: {error}")
         
         finally:
             # 计算处理时间
@@ -142,7 +143,7 @@ class BaseHandler(ABC):
             else:
                 # 向后兼容：尝试使用字符串任务ID移除
                 self.redis_client.lrem(self.processing_queue, 0, task_id)
-            
+
             if success:
                 self.redis_client.lpush(self.completed_queue, task_id)
                 self.redis_client.lpush(self.processing_times, str(processing_time))
@@ -159,6 +160,8 @@ class BaseHandler(ABC):
                     "timestamp": time.time()
                 }
                 self.redis_client.lpush(self.failed_queue, json.dumps(failed_data))
+
+                print(f"{self.failed_queue} 入队")
             
             # 更新统计信息
             self.stats["tasks_processed"] += 1
@@ -190,7 +193,7 @@ class BaseHandler(ABC):
         for raw_task_id in task_ids:
             pipeline.lpush(self.processing_queue, raw_task_id)
         pipeline.execute()
-        
+
         # 并行处理任务
         tasks = []
         for raw_task_id in task_ids:

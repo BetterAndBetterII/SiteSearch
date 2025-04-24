@@ -10,9 +10,6 @@ from openai import OpenAI
 from concurrent.futures import ThreadPoolExecutor
 import tempfile
 
-# 在代码开头加载 .env 文件
-load_dotenv()
-
 def doc_to_pdf(input_path: str, output_dir: str = None) -> str:
     """
     将文档(docx, pptx等)转换为PDF
@@ -126,7 +123,13 @@ def pdf_to_image(input_path: str, output_dir: str = None) -> str:
             output_path.mkdir(parents=True, exist_ok=True)
 
         # 转换PDF为图片
-        images = convert_from_path(input_path)
+        try:
+            images = convert_from_path(input_path)
+            if not images:
+                raise Exception("PDF文件未能转换为图片（可能是空PDF或格式错误）")
+        except Exception as e:
+            print(f"PDF转图片失败: {str(e)}")
+            raise Exception(f"PDF转图片失败: {str(e)}")
         
         # 保存图片
         page_count = 1
@@ -147,7 +150,7 @@ def pdf_to_image(input_path: str, output_dir: str = None) -> str:
         return str(output_path)
         
     except Exception as e:
-        print(f"转换失败: {str(e)}")
+        print(f"转换失败: PDF转图片错误 - {str(e)}")
         return ""
 
 def encode_image_to_base64(image_path: str) -> str:
@@ -168,18 +171,22 @@ def image_to_markdown(input_dir: str, output_file: str, workers: int = 30) -> st
     try:
         # 处理输出路径
         input_dir = Path(input_dir)
+        output_file = Path(output_file)
+        
+        # 确保输出目录存在
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         
         # 初始化OpenAI客户端
         client = OpenAI(
             api_key=os.getenv('OPENAI_API_KEY'),
             base_url=os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1'),  # 从环境变量获取base_url
-            max_retries=999,
+            max_retries=5,  # 减少重试次数以避免过长等待
         )
         
         # 获取目录下所有PNG图片并按名称排序
         image_files = sorted(
             [f for f in input_dir.glob("*.png")],
-            key=lambda x: int(x.stem.split('_')[1])
+            key=lambda x: int(x.stem.split('_')[1]) if '_' in x.stem else int(x.stem)
         )
         
         if not image_files:
@@ -187,6 +194,7 @@ def image_to_markdown(input_dir: str, output_file: str, workers: int = 30) -> st
             
         # 存储所有页面的markdown内容
         all_markdown = {k: None for k in range(len(image_files))}
+        processed_count = 0  # 成功处理的图片数量
 
         def _process_image(image_file, index):
             print(f"正在处理图片: {image_file.name}")
@@ -224,7 +232,7 @@ def image_to_markdown(input_dir: str, output_file: str, workers: int = 30) -> st
             all_markdown[index] = markdown_content
         
         # 线程池处理每张图片
-        with ThreadPoolExecutor(max_workers=workers) as executor:
+        with ThreadPoolExecutor(max_workers=min(workers, len(image_files))) as executor:
             executor.map(_process_image, image_files, range(len(image_files)))
 
         # 将所有内容写入文件
@@ -295,6 +303,11 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
         转换后的Markdown文件路径
     """
     try:
+        # 检查输入文件是否存在
+        if not os.path.exists(input_path):
+            print(f"文件不存在: {input_path}")
+            return ""
+            
         # 创建临时目录
         input_file = Path(input_path)
         temp_dir = tempfile.mkdtemp()
@@ -313,13 +326,13 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
         # 判断输入文件类型
         if file_suffix in ['.png', '.jpg', '.jpeg'] or manual_type in ['png', 'jpg', 'jpeg']:
             # 如果是图片文件，创建临时图片目录并复制图片
-            image_dir = temp_dir 
+            image_dir = Path(temp_dir)
             # 复制图片到临时目录
             import shutil
             image_path = image_dir / f"page_1{file_suffix}"
             shutil.copy2(input_path, image_path)
             # 转换为Markdown
-            markdown_path = image_to_markdown(str(image_dir), output_file)
+            markdown_path = image_to_markdown(str(image_dir), str(output_file))
         else:
             # 对于PDF和其他文档类型的处理
             if file_suffix == '.pdf' or manual_type == 'pdf':
@@ -327,18 +340,40 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
             else:
                 # 步骤1: 转换为PDF
                 pdf_path = doc_to_pdf(input_path, str(temp_dir))
-                if not pdf_path:
-                    raise Exception("文档转PDF失败")
+                if not pdf_path or not os.path.exists(pdf_path):
+                    print("文档转PDF失败")
+                    # 清理临时文件
+                    import shutil
+                    shutil.rmtree(temp_dir)
+                    return ""
                     
             # 步骤2: PDF转图片
             images_dir = pdf_to_image(pdf_path, str(temp_dir))
-            if not images_dir:
-                raise Exception("PDF转图片失败")
+            if not images_dir or not os.path.exists(images_dir):
+                print("PDF转图片失败")
+                # 清理临时文件
+                import shutil
+                shutil.rmtree(temp_dir)
+                return ""
+                
+            # 检查图片目录是否包含图片文件
+            image_files = list(Path(images_dir).glob("*.png"))
+            if not image_files:
+                print(f"未在{images_dir}目录找到任何PNG图片")
+                # 清理临时文件
+                import shutil
+                shutil.rmtree(temp_dir)
+                return ""
+                
             # 步骤3: 图片转Markdown
-            markdown_path = image_to_markdown(images_dir, output_file)
+            markdown_path = image_to_markdown(images_dir, str(output_file))
             
-        if not markdown_path:
-            raise Exception("转换Markdown失败")
+        if not markdown_path or not os.path.exists(markdown_path):
+            print("转换Markdown失败")
+            # 清理临时文件
+            import shutil
+            shutil.rmtree(temp_dir)
+            return ""
             
         # 清理临时文件
         import shutil
@@ -348,6 +383,13 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
         
     except Exception as e:
         print(f"转换失败: {str(e)}")
+        try:
+            # 尝试清理临时文件
+            import shutil
+            if 'temp_dir' in locals() and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+        except:
+            pass
         return ""
 
 def main():

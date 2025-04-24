@@ -1,6 +1,7 @@
 import re
 from bs4 import BeautifulSoup
 from typing import List
+import os
 
 from src.backend.tools.markdown_tools import replace_base64, clean_md
 from .base import DataCleaner
@@ -74,7 +75,8 @@ class SimpleHTMLCleaner(DataCleaner):
             prev_line = line
         
         # 合并所有行
-        return '\n'.join(cleaned_lines) 
+        result = '\n'.join(cleaned_lines) 
+        return replace_base64(result)
     
 class IDExtractor(DataCleaner):
     # 需要提取的id列表
@@ -281,15 +283,23 @@ class PDFStrategy(CleaningStrategy):
         return mimetype.startswith('application/pdf')
 
     def clean(self, content: bytes | str) -> str:
-        # 使用pdfminer.six提取文本（演示效果，后续需要使用专门的文档解析器）
-        # text = extract_text(pdf_file)
-        # return text
+        # 创建临时文件保存PDF内容
         temp_path = tempfile.mktemp()
         with open(temp_path, 'wb') as f:
             f.write(content)
+            
+        # 使用AI转换器处理PDF
         pdf_path = ai_converter(temp_path, manual_type='pdf')
+        
+        # 检查转换结果
+        if not pdf_path or not os.path.exists(pdf_path):
+            raise Exception("PDF转换失败，无法生成Markdown文件")
+            
+        # 读取转换后的文件内容
         with open(pdf_path, 'r', encoding="utf-8") as f:
             text = f.read()
+            
+        # 清理表格
         text = self.markdown_table_cleaner.clean(text)
         return text
 
@@ -301,16 +311,28 @@ class DocxStrategy(CleaningStrategy):
         return mimetype.startswith('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
     def clean(self, content: bytes | str) -> str:
-        # 使用python-docx库解析Docx文件
-        # doc = docx.Document(io.BytesIO(response.content))
-        # return '\n'.join([paragraph.text for paragraph in doc.paragraphs])
-        temp_path = tempfile.mktemp()
-        with open(temp_path, 'wb') as f:
-            f.write(content)
-        docx_path = ai_converter(temp_path, manual_type='docx')
-        with open(docx_path, 'r', encoding="utf-8") as f:
-            text = f.read()
-        return text
+        try:
+            # 创建临时文件保存Docx内容
+            temp_path = tempfile.mktemp()
+            with open(temp_path, 'wb') as f:
+                f.write(content)
+                
+            # 使用AI转换器处理Docx
+            docx_path = ai_converter(temp_path, manual_type='docx')
+            
+            # 检查转换结果
+            if not docx_path or not os.path.exists(docx_path):
+                print(f"Docx转换失败，无法生成Markdown文件")
+                return "Docx文件转换失败，无法提取内容"
+                
+            # 读取转换后的文件内容
+            with open(docx_path, 'r', encoding="utf-8") as f:
+                text = f.read()
+                
+            return text
+        except Exception as e:
+            print(f"Docx处理错误: {str(e)}")
+            return f"Docx处理失败: {str(e)}"
 
 class ImageDiscardStrategy(CleaningStrategy):
     """图片丢弃策略"""

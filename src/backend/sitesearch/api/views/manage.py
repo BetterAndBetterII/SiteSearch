@@ -15,6 +15,15 @@ def get_manager():
         milvus_uri = os.getenv('MILVUS_URI')
         _manager = MultiProcessSiteSearchManager(redis_url, milvus_uri)
         _manager.initialize_components()
+        # 启动共享组件
+        _manager.start_shared_components(
+            cleaner_workers=1,
+            storage_workers=1,
+            indexer_workers=4
+        )
+        
+        # 启动监控
+        _manager.start_monitoring()
     return _manager
 
 @csrf_exempt
@@ -80,7 +89,7 @@ def get_queue_metrics(request, queue_name=None):
     else:
         # 获取所有队列的指标
         metrics = {}
-        for queue_name in ["crawl", "clean", "index"]:
+        for queue_name in ["crawler", "cleaner", "storage", "indexer"]:
             metrics[queue_name] = manager.get_queue_metrics(queue_name)
         
         # 添加任务队列的指标
@@ -106,7 +115,7 @@ def get_component_status(request, component_type=None):
     else:
         # 获取所有组件的状态
         components = {}
-        for component_type in ["cleaner", "storage", "indexer", "crawler"]:
+        for component_type in ["crawler", "cleaner", "storage", "indexer"]:
             components[component_type] = manager.get_component_status(component_type)
         return JsonResponse({'components': components})
 
@@ -122,6 +131,7 @@ def create_task(request):
             max_depth = data.get('max_depth', 3)
             regpattern = data.get('regpattern', '*')
             crawler_workers = data.get('crawler_workers', 1)
+            crawler_type = data.get('crawler_type', 'httpx')
             
             if not start_url:
                 return JsonResponse({'error': '缺少起始URL'}, status=400)
@@ -133,6 +143,7 @@ def create_task(request):
                 max_urls=max_urls,
                 max_depth=max_depth,
                 regpattern=regpattern,
+                crawler_type=crawler_type,
                 crawler_workers=crawler_workers
             )
             

@@ -168,6 +168,57 @@ export const documentApi = {
   refreshDocument: (siteId: string, docId: number) => request(`/sites/${siteId}/documents/${docId}/refresh/`, {
     method: 'POST',
   }),
+
+  // 搜索文档
+  searchDocuments: (siteId: string, params: {
+    query: string;
+    page?: number;
+    page_size?: number;
+  }) => {
+    // 将数值类型转换为字符串，以兼容URLSearchParams
+    const searchParams: Record<string, string> = {
+      query: params.query
+    };
+    
+    if (params.page !== undefined) {
+      searchParams.page = params.page.toString();
+    }
+    
+    if (params.page_size !== undefined) {
+      searchParams.page_size = params.page_size.toString();
+    }
+    
+    const queryString = `?${new URLSearchParams(searchParams).toString()}`;
+    return request(`/sites/${siteId}/documents/list/search/${queryString}`);
+  },
+  
+  // 删除文档 - 支持批量删除或删除所有
+  deleteDocuments: (siteId: string, data: {
+    document_ids?: number[];
+    delete_all?: boolean;
+  }) => {
+    return request(`/sites/${siteId}/documents/list/delete/`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  
+  // 获取文档统计信息
+  getDocumentsStats: (siteId: string) => {
+    return request(`/sites/${siteId}/documents/?stats=true`);
+  },
+  
+  // 批量更新文档
+  batchUpdateDocuments: (siteId: string, data: {
+    document_ids: number[];
+    operation: string;
+    data?: any;
+  }) => {
+    return request(`/sites/${siteId}/documents/batch/`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 };
 
 // 搜索API

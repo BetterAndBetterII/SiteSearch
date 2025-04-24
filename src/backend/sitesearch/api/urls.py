@@ -43,12 +43,14 @@ urlpatterns = [
     path('sites/<str:site_id>/documents/', documents.document_list, name='document_list'),
     path('sites/<str:site_id>/documents/<int:doc_id>/', documents.document_detail, name='document_detail'),
     path('sites/<str:site_id>/documents/<int:doc_id>/refresh/', documents.refresh_document, name='refresh_document'),
+    # 文档列出，分页，排序，简单搜索；删除
+    path('sites/<str:site_id>/documents/list/search/', documents.document_search, name='document_search'),
+    path('sites/<str:site_id>/documents/list/delete/', documents.document_delete, name='document_delete'),
     
     # 搜索模块
-    path('search/', search.search, name='search'),
-    path('semantic-search/', search.semantic_search, name='semantic_search'),
-    path('chat/', search.chat, name='chat'),
-    path('search-feedback/<int:search_log_id>/', search.search_feedback, name='search_feedback'),
+    # path('semantic-search/', search.semantic_search, name='semantic_search'),
+    # path('chat/', search.chat, name='chat'),
+    # path('search-feedback/<int:search_log_id>/', search.search_feedback, name='search_feedback'),
     
     # 定时任务模块
     path('sites/<str:site_id>/crawl-policies/<int:policy_id>/schedule/', schedules.create_schedule, name='create_schedule'),

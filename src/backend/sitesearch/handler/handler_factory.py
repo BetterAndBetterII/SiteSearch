@@ -22,8 +22,7 @@ class HandlerFactory:
         redis_url: str,
         handler_id: str = None,
         input_queue: str = "url",
-        output_queue: str = "crawl",
-        crawler_type: str = "httpx",
+        output_queue: str = "crawler",
         crawler_config: Dict[str, Any] = None,
         batch_size: int = 1,
         sleep_time: float = 0.5,
@@ -58,16 +57,16 @@ class HandlerFactory:
         # 创建新的Handler
         handler = CrawlerHandler(
             redis_url=redis_url,
+            component_type="crawler",
             input_queue=input_queue,
             output_queue=output_queue,
             handler_id=handler_id,
             batch_size=batch_size,
             sleep_time=sleep_time,
             max_retries=max_retries,
-            crawler_type=crawler_type,
             crawler_config=crawler_config
         )
-        
+
         # 存储Handler实例
         cls._handlers[handler_id] = handler
         
@@ -82,8 +81,8 @@ class HandlerFactory:
         cls,
         redis_url: str,
         handler_id: str = None,
-        input_queue: str = "crawl",
-        output_queue: str = "clean",
+        input_queue: str = "crawler",
+        output_queue: str = "cleaner",
         strategies: List = None,
         batch_size: int = 5,
         sleep_time: float = 0.1,
@@ -117,6 +116,7 @@ class HandlerFactory:
         # 创建新的Handler
         handler = CleanerHandler(
             redis_url=redis_url,
+            component_type="cleaner",
             input_queue=input_queue,
             output_queue=output_queue,
             handler_id=handler_id,
@@ -140,8 +140,8 @@ class HandlerFactory:
         cls,
         redis_url: str,
         handler_id: str = None,
-        input_queue: str = "clean",
-        output_queue: str = "index",
+        input_queue: str = "cleaner",
+        output_queue: str = "storage",
         batch_size: int = 5,
         sleep_time: float = 0.1,
         max_retries: int = 3,
@@ -173,6 +173,7 @@ class HandlerFactory:
         # 创建新的Handler
         handler = StorageHandler(
             redis_url=redis_url,
+            component_type="storage",
             input_queue=input_queue,
             output_queue=output_queue,
             handler_id=handler_id,
@@ -196,7 +197,7 @@ class HandlerFactory:
         redis_url: str,
         milvus_uri: str,
         handler_id: str = None,
-        input_queue: str = "index",
+        input_queue: str = "storage",
         batch_size: int = 3,
         sleep_time: float = 0.2,
         max_retries: int = 3,
@@ -229,6 +230,7 @@ class HandlerFactory:
         handler = IndexerHandler(
             redis_url=redis_url,
             milvus_uri=milvus_uri,
+            component_type="indexer",
             input_queue=input_queue,
             handler_id=handler_id,
             batch_size=batch_size,

@@ -1,14 +1,15 @@
 import { ReactNode } from 'react';
 import { Header } from './Header';
 
-type LayoutProps = {
+export interface LayoutProps {
   children: ReactNode;
-};
+  currentPath: string;
+}
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, currentPath }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+      <Header currentPath={currentPath} />
       <main className="flex-1 container mx-auto px-4 py-6">
         {children}
       </main>

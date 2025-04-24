@@ -33,7 +33,6 @@ class Document(models.Model):
     crawler_id = models.CharField(max_length=255, help_text="爬虫ID")
     crawler_type = models.CharField(max_length=50, help_text="爬虫类型")
     crawler_config = models.JSONField(default=dict, help_text="爬虫配置")
-    site_id = models.CharField(max_length=255, db_index=True, help_text="站点ID")
     
     # 版本控制
     created_at = models.DateTimeField(auto_now_add=True, help_text="创建时间")
@@ -48,7 +47,6 @@ class Document(models.Model):
         db_table = 'sitesearch_document'
         indexes = [
             models.Index(fields=['content_hash']),
-            models.Index(fields=['site_id']),
             models.Index(fields=['created_at']),
             models.Index(fields=['is_indexed']),
         ]
@@ -96,7 +94,6 @@ class Document(models.Model):
             crawler_id=data.get('crawler_id', ''),
             crawler_type=data.get('crawler_type', ''),
             crawler_config=data.get('crawler_config', {}),
-            site_id=data.get('site_id', ''),
             index_operation=data.get('index_operation', 'new')
         )
         
@@ -104,6 +101,77 @@ class Document(models.Model):
         document.set_metadata(data.get('metadata', {}))
         
         return document
+    
+    def get_site_ids(self):
+        """
+        获取文档关联的所有站点ID
+        
+        Returns:
+            List[str]: 站点ID列表
+        """
+        return list(self.sites.values_list('site_id', flat=True))
+    
+    def add_to_site(self, site_id):
+        """
+        将文档添加到指定站点
+        
+        Args:
+            site_id: 站点ID
+            
+        Returns:
+            SiteDocument: 创建的站点文档关联对象
+        """
+        site_doc, created = SiteDocument.objects.get_or_create(
+            document=self,
+            site_id=site_id
+        )
+        return site_doc
+    
+    def remove_from_site(self, site_id):
+        """
+        从指定站点移除文档
+        
+        Args:
+            site_id: 站点ID
+            
+        Returns:
+            bool: 是否成功移除
+        """
+        count, _ = SiteDocument.objects.filter(document=self, site_id=site_id).delete()
+        return count > 0
+    
+    @property
+    def primary_site_id(self):
+        """
+        获取文档的主站点ID（第一个添加的站点）
+        用于向后兼容
+        
+        Returns:
+            str: 主站点ID，如果没有则返回空字符串
+        """
+        site = self.sites.order_by('created_at').first()
+        return site.site_id if site else ""
+
+
+class SiteDocument(models.Model):
+    """
+    站点-文档关联模型，实现文档可以归属于多个站点
+    """
+    site_id = models.CharField(max_length=255, db_index=True, help_text="站点ID")
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='sites')
+    created_at = models.DateTimeField(auto_now_add=True, help_text="创建时间")
+    
+    class Meta:
+        db_table = 'sitesearch_site_document'
+        unique_together = ('site_id', 'document')
+        indexes = [
+            models.Index(fields=['site_id']),
+            models.Index(fields=['created_at']),
+        ]
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.site_id} - {self.document.url}"
 
 
 class CrawlHistory(models.Model):
@@ -151,7 +219,7 @@ class CrawlHistory(models.Model):
                 "content_length": len(document.content) if document.content else 0,
                 "clean_content_length": len(document.clean_content) if document.clean_content else 0,
                 "crawler_id": document.crawler_id,
-                "site_id": document.site_id
+                "site_ids": document.get_site_ids()
             }
         )
         return history 
