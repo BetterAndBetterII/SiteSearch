@@ -25,7 +25,7 @@ class BGEM3SparseEmbeddingFunction(BaseSparseEmbeddingFunction):
         super().__init__()
 
     @retry(
-        stop=stop_after_attempt(3),
+        stop=stop_after_attempt(64),
         wait=wait_exponential(multiplier=1, min=1, max=10),
         retry=retry_if_exception_type(
             (
@@ -94,7 +94,7 @@ class BGEM3SparseEmbeddingFunction(BaseSparseEmbeddingFunction):
             raise
 
     @retry(
-        stop=stop_after_attempt(3),
+        stop=stop_after_attempt(64),
         wait=wait_exponential(multiplier=1, min=1, max=10),
         retry=retry_if_exception_type(
             (

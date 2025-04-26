@@ -8,7 +8,7 @@ export interface SearchResultItem {
   score: number;
   created_at: string;
   updated_at: string;
-  site_id: string;
+  site_ids: string[];
   mimetype: string;
   metadata?: Record<string, any>;
 }

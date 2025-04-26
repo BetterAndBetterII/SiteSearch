@@ -17,8 +17,6 @@ export function SearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [totalResults, setTotalResults] = useState(0);
-  const [page, setPage] = useState(1);
-  const pageSize = 10; // 改为常量而不是状态
   const [error, setError] = useState<string | null>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [sites, setSites] = useState<Site[]>([]);
@@ -30,7 +28,7 @@ export function SearchPage() {
   const [searchParams, setSearchParams] = useState<SearchParams>({
     q: '',
     page: 1,
-    page_size: pageSize,
+    page_size: 50,
     top_k: 20,
     similarity_cutoff: 0.6,
     rerank: true,
@@ -95,7 +93,6 @@ export function SearchPage() {
       
       setResults(response.results);
       setTotalResults(response.total_count);
-      setPage(response.page);
       setExecutionTime(response.execution_time_ms);
       
     } catch (error) {
@@ -111,21 +108,8 @@ export function SearchPage() {
   const handleSearch = (searchQuery: string) => {
     setQuery(searchQuery);
     setHasSearched(true);
-    setPage(1); // 重置页码
     
     fetchSearchResults(searchQuery, 1);
-  };
-
-  // 处理分页
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-    fetchSearchResults(query, newPage);
-    
-    // 滚动到页面顶部
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
   };
   
   // 处理站点选择
@@ -135,7 +119,6 @@ export function SearchPage() {
     
     // 如果已经搜索过，使用新选择的站点重新搜索
     if (hasSearched && query) {
-      setPage(1);
       fetchSearchResults(query, 1);
     }
   };
@@ -164,7 +147,6 @@ export function SearchPage() {
     
     // 如果已经搜索过，使用新参数重新搜索
     if (hasSearched && query) {
-      setPage(1);
       fetchSearchResults(query, 1);
     }
   };
@@ -347,31 +329,6 @@ export function SearchPage() {
             isLoading={isLoading} 
             query={query} 
           />
-          
-          {/* 分页组件 */}
-          {!isLoading && results.length > 0 && totalResults > pageSize && (
-            <div className="w-full max-w-2xl mx-auto mt-8 flex justify-center">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page <= 1}
-                  className="px-3 py-1 bg-card border border-border rounded-md disabled:opacity-50"
-                >
-                  上一页
-                </button>
-                <span className="text-sm">
-                  第 {page} 页 / 共 {Math.ceil(totalResults / pageSize)} 页
-                </span>
-                <button
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page >= Math.ceil(totalResults / pageSize)}
-                  className="px-3 py-1 bg-card border border-border rounded-md disabled:opacity-50"
-                >
-                  下一页
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>

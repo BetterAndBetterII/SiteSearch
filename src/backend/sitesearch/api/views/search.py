@@ -137,11 +137,14 @@ async def semantic_search(request):
             return JsonResponse({'error': '搜索查询不能为空'}, status=400)
         
         # 验证站点ID (如果提供)
+        site_ids = []
         if site_id:
             try:
                 await Site.objects.aget(id=site_id)
             except Site.DoesNotExist:
                 return JsonResponse({'error': f'站点不存在: {site_id}'}, status=400)
+        else:
+            site_ids = [site.id async for site in Site.objects.all()]
         
         # 记录搜索开始时间
         import time
@@ -151,6 +154,8 @@ async def semantic_search(request):
         filters = {}
         if site_id:
             filters['site_id'] = site_id
+        if site_ids:
+            filters['site_ids'] = site_ids
         if filter_mimetype:
             filters['mimetype'] = filter_mimetype
         

@@ -35,7 +35,7 @@ Settings.embed_model = SiliconFlowEmbedding(
     base_url=f"{os.getenv('EMBEDDING_BASE_URL')}/embeddings",
     model="bge-m3",
     timeout=30,
-    max_retries=32,
+    max_retries=64,
     dimensions=int(os.getenv("EMB_DIMENSIONS", 1536)),
 )
 

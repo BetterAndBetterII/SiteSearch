@@ -51,9 +51,11 @@ const SearchResult: React.FC<SearchResultProps> = ({ result, query }) => {
     <div className="mb-6 p-4 bg-card rounded-lg border border-border hover:border-primary transition-colors">
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center text-xs text-muted-foreground mb-1">
-          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full mr-2">
-            {result.site_id || '未知站点'}
-          </span>
+          {result.site_ids.length > 0 && result.site_ids.map((site_id) => (
+            <span key={site_id} className="bg-primary/10 text-primary px-2 py-0.5 rounded-full mr-2">
+              {site_id}
+            </span>
+          ))}
           <span>{formattedDate}</span>
           {result.score > 0 && (
             <span className="ml-2 text-xs text-muted-foreground">
@@ -138,8 +140,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({ results, isLoading
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div className="flex flex-col gap-2">
-        {results.map((result) => (
-          <SearchResult key={result.id} result={result} query={query} />
+        {results.map((result, index) => (
+          <SearchResult key={index} result={result} query={query} />
         ))}
       </div>
     </div>

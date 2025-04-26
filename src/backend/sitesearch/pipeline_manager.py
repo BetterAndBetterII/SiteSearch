@@ -199,7 +199,10 @@ class MultiProcessSiteSearchManager:
         """
         # 删除已完成的
         for queue_name in ["crawler", "cleaner", "storage", "indexer"]:
-            self.redis_client.delete(f"sitesearch:queue:{queue_name}")
+            self.redis_client.delete(f"sitesearch:processing:{queue_name}")
+            self.redis_client.delete(f"sitesearch:completed:{queue_name}")
+            self.redis_client.delete(f"sitesearch:failed:{queue_name}")
+            self.redis_client.delete(f"sitesearch:processing_times:{queue_name}")
         print("已删除已完成的队列")
         # 未完成的放到队列头部
         # for queue_name in ["crawler", "cleaner", "storage", "indexer"]:
