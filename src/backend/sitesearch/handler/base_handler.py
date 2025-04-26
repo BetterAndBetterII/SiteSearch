@@ -32,7 +32,8 @@ class BaseHandler(ABC):
                  handler_id: str = None,
                  batch_size: int = 1,
                  sleep_time: float = 0.1,
-                 max_retries: int = 3):
+                 max_retries: int = 3,
+                 auto_exit: bool = False):
         """
         初始化Handler
         
@@ -64,6 +65,7 @@ class BaseHandler(ABC):
         self.running = False
         self.thread = None
         self.loop = None
+        self.auto_exit = auto_exit
         
         # 统计信息
         self.stats = {
@@ -229,7 +231,11 @@ class BaseHandler(ABC):
                 
                 # 如果没有处理任何任务，则休眠一段时间
                 if processed == 0:
-                    await asyncio.sleep(self.sleep_time)
+                    if self.auto_exit:
+                        self.logger.info(f"Handler {self.handler_id} 没有处理任何任务，自动退出")
+                        self.stop()
+                    else:
+                        await asyncio.sleep(self.sleep_time)
                 
             except Exception as e:
                 self.logger.exception(f"处理任务批次时发生错误: {str(e)}")
@@ -263,10 +269,10 @@ class BaseHandler(ABC):
         self.logger.info(f"正在停止Handler {self.handler_id}")
         self.running = False
         
-        if self.thread:
-            self.thread.join(timeout=30)
-            if self.thread.is_alive():
-                self.logger.warning(f"Handler {self.handler_id} 线程未能正常终止")
+        # if self.thread:
+        #     self.thread.join(timeout=30)
+        #     if self.thread.is_alive():
+        #         self.logger.warning(f"Handler {self.handler_id} 线程未能正常终止")
         
         self.status = ComponentStatus.STOPPED
         self.logger.info(f"Handler {self.handler_id} 已停止")

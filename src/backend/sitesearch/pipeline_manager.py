@@ -61,7 +61,8 @@ def component_worker(component_type, redis_url, milvus_uri, worker_id, config):
                 output_queue=output_queue or "crawler",  # 如果未指定，使用默认值
                 crawler_config=config.get("crawler_config", {}),
                 batch_size=batch_size,
-                sleep_time=sleep_time
+                sleep_time=sleep_time,
+                auto_exit=True
             )
         elif component_type == "cleaner":
             handler = HandlerFactory.create_cleaner_handler(
@@ -201,12 +202,14 @@ class MultiProcessSiteSearchManager:
             self.redis_client.delete(f"sitesearch:queue:{queue_name}")
         print("已删除已完成的队列")
         # 未完成的放到队列头部
-        for queue_name in ["crawler", "cleaner", "storage", "indexer"]:
+        # for queue_name in ["crawler", "cleaner", "storage", "indexer"]:
             # self.redis_client.lpush(f"sitesearch:queue:{queue_name}", "https://www.baidu.com")
-            self.redis_client.delete(f"sitesearch:processing:{queue_name}")
-            self.redis_client.delete(f"sitesearch:completed:{queue_name}")
-            self.redis_client.delete(f"sitesearch:failed:{queue_name}")
-            self.redis_client.delete(f"sitesearch:processing_times:{queue_name}")
+            # self.redis_client.delete(f"sitesearch:processing:{queue_name}")
+            # self.redis_client.delete(f"sitesearch:completed:{queue_name}")
+            # self.redis_client.delete(f"sitesearch:failed:{queue_name}")
+            # self.redis_client.delete(f"sitesearch:processing_times:{queue_name}")
+            # for item in self.redis_client.lrange(f"sitesearch:queue:{queue_name}", 0, -1):
+            #     self.redis_client.lpush(f"sitesearch:queue:{queue_name}", item)
         
     def initialize_components(self, 
                             crawler_config: Dict[str, Any] = None,
@@ -578,12 +581,12 @@ class MultiProcessSiteSearchManager:
     def create_crawl_task(
             self, 
             start_url: str, 
-            site_id: str = "default", 
-            max_urls: int = 1000,
+            site_id: str, 
+            max_urls: int,
             max_depth: int = 3,
             regpattern: str = "*",
             crawler_type: str = "httpx",
-            crawler_workers: int = 1
+            crawler_workers: int = 6
         ) -> str:
         """
         创建新的遍历任务
@@ -660,6 +663,47 @@ class MultiProcessSiteSearchManager:
         self.add_url_to_task_queue(task_id, start_url, site_id)
         
         print(f"已创建任务: {task_id}, 起始URL: {start_url}")
+        return task_id
+    
+    def create_document_index_task(self) -> str:
+        """
+        创建文档索引任务
+        
+        Args:
+            site_id: 站点ID
+            
+        Returns:
+            str: 任务ID
+        """
+        from src.backend.sitesearch.storage.utils import get_pending_index_documents, get_document_sites
+        documents = get_pending_index_documents(limit=1000000000)
+        task_id = f"task-{uuid.uuid4().hex[:8]}"
+        for document in documents:
+            indexer_input_queue = f"sitesearch:queue:storage"
+            sites = get_document_sites(document.id)
+            for site in sites:
+                task = {  
+                    "url": document.url,
+                    "content": document.content,
+                    "document_id": document.id,
+                    "clean_content": document.clean_content,
+                    "status_code": document.status_code,
+                    "headers": document.headers,
+                    "timestamp": document.timestamp,
+                    "links": document.links,
+                    "mimetype": document.mimetype,
+                    "metadata": document.metadata,
+                    "content_hash": document.content_hash,
+                    "crawler_id": document.crawler_id,
+                    "crawler_type": document.crawler_type,
+                    "crawler_config": document.crawler_config,
+                    "site_id": site,
+                    "version": document.version,
+                    "index_operation": "new",
+                    "is_indexed": False
+                }
+            self.redis_client.lpush(indexer_input_queue, json.dumps(task))
+
         return task_id
     
     def add_url_to_task_queue(self, task_id: str, url: str, site_id: str = None) -> bool:
@@ -868,25 +912,25 @@ class MultiProcessSiteSearchManager:
             self.monitor_thread = None
         print("系统监控已停止")
     
-    def add_url_to_queue(self, url: str, site_id: str = "default") -> str:
-        """
-        向爬取队列添加URL（创建一个新的爬取任务）
+    # def add_url_to_queue(self, url: str, site_id: str = "default") -> str:
+    #     """
+    #     向爬取队列添加URL（创建一个新的爬取任务）
         
-        Args:
-            url: 要爬取的URL
-            site_id: 站点ID
+    #     Args:
+    #         url: 要爬取的URL
+    #         site_id: 站点ID
             
-        Returns:
-            str: 创建的任务ID
-        """
-        # 创建新任务
-        task_id = self.create_crawl_task(
-            start_url=url,
-            site_id=site_id,
-            max_urls=1000,
-            max_depth=3
-        )
-        return task_id
+    #     Returns:
+    #         str: 创建的任务ID
+    #     """
+    #     # 创建新任务
+    #     task_id = self.create_crawl_task(
+    #         start_url=url,
+    #         site_id=site_id,
+    #         max_urls=1000,
+    #         max_depth=3
+    #     )
+    #     return task_id
     
     def get_all_tasks_status(self) -> Dict[str, Dict[str, Any]]:
         """

@@ -109,12 +109,14 @@ class Agent:
     async def run(
         self, 
         messages: List[ChatCompletionMessageParam],
+        site_id: str,
         context: Dict[str, Any] = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """运行Agent进行基础对话
         
         Args:
             messages: 对话消息列表
+            site_id: 站点ID
             context: 可选的上下文信息
             
         Yields:
@@ -197,6 +199,7 @@ class Agent:
             answer = ""
             
             async for chunk in response:
+                print(chunk)
                 if choices := chunk.choices:
                     if delta := choices[0].delta:
                         # 只有第一个chunk会包含role

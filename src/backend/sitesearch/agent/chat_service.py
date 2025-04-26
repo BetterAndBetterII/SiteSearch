@@ -7,9 +7,10 @@ import json
 import asyncio
 from typing import Dict, List, Any, AsyncGenerator, Optional
 from datetime import datetime
-
+from functools import partial
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
+import traceback
 
 from src.backend.sitesearch.agent.model import Agent
 from src.backend.sitesearch.agent.analyzer import Analyzer
@@ -68,9 +69,31 @@ class ChatService:
         # 维护会话记录
         self.sessions = {}
     
+    async def run_query(self, query: str, keywords: List[str], site_id: str) -> str:
+        """运行查询
+        
+        Args:
+            query: 查询字符串
+            keywords: 关键词列表
+        """
+        try:
+            print(f"Running query: {query}, keywords: {keywords}, site_id: {site_id}")
+            from src.backend.sitesearch.indexer.search import semantic_search_documents
+            filters = {
+                "site_id": site_id
+            }
+            r = await semantic_search_documents(query, filters, top_k=15)
+            print(f"Results: {r}")
+            return "\n".join([result['text'] for result in r['results']])
+        except Exception as e:
+            print(f"Error running query: {e}")
+            traceback.print_exc()
+            return "Error running query."
+
     async def chat(
         self, 
         messages: List[ChatCompletionMessageParam], 
+        site_id: str,
         session_id: str = None,
         context: Dict[str, Any] = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
@@ -84,6 +107,38 @@ class ChatService:
         Yields:
             流式响应
         """
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "run_query",
+                    "description": "Run a query to search information in the knowledge base.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The query should be detail and concise without including school name.",
+                            },
+                            "keywords": {
+                                "type": "array",
+                                "description": "The related keywords to the query.",
+                                "items": {
+                                    "type": "string",
+                                },
+                            },
+                        },
+                        "required": ["query", "keywords"],
+                    },
+                },
+            }
+        ]
+
+        _run_query = partial(self.run_query, site_id=site_id)
+        tools_handler = {
+            "run_query": _run_query
+        }
+
         if session_id:
             # 更新会话记录
             self.sessions[session_id] = {
@@ -93,13 +148,14 @@ class ChatService:
             }
         
         # 使用Agent处理对话
-        async for chunk in self.agent.run(messages, context):
+        async for chunk in self.agent.run_with_tools(messages, tools, tools_handler, context):
             yield chunk
     
     async def chat_with_search(
         self, 
         messages: List[ChatCompletionMessageParam],
         search_function,
+        site_id: str,
         session_id: str = None,
         context: Dict[str, Any] = None,
         deep_thinking: bool = False
@@ -189,7 +245,7 @@ class ChatService:
                 print(f"搜索查询失败，错误: {e}")
         
         # 使用Agent生成回答
-        async for chunk in self.agent.run(messages, context):
+        async for chunk in self.agent.run(messages, site_id, context):
             yield chunk
     
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:

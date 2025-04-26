@@ -9,6 +9,7 @@ import asyncio
 import os
 from django.core.paginator import Paginator
 import traceback
+import uuid
 
 from src.backend.sitesearch.api.models import Site, SearchLog
 from src.backend.sitesearch.agent.chat_service import ChatService
@@ -20,6 +21,10 @@ def get_client_info(request):
         'user_ip': request.META.get('REMOTE_ADDR', ''),
         'user_agent': request.META.get('HTTP_USER_AGENT', '')
     }
+
+async def format_ndjson(response_data):
+    async for chunk in response_data:
+        yield json.dumps(chunk) + '\n'
 
 
 # def search(request):
@@ -121,8 +126,11 @@ async def semantic_search(request):
         query = request.GET.get('q', '')
         site_id = request.GET.get('site_id')
         page = int(request.GET.get('page', 1))
-        page_size = int(request.GET.get('page_size', 5))
+        top_k = int(request.GET.get('top_k', 5))
         filter_mimetype = request.GET.get('mimetype')
+        similarity_cutoff = float(request.GET.get('similarity_cutoff', 0.6))
+        rerank = request.GET.get('rerank', True)
+        rerank_top_k = int(request.GET.get('rerank_top_k', 10))
         
         # 验证查询不为空
         if not query:
@@ -153,8 +161,11 @@ async def semantic_search(request):
         search_results = await semantic_search_documents(
             query=query,
             filters=filters,
-            top_k=page_size,
-            page=page
+            top_k=top_k,
+            page=page,
+            similarity_cutoff=similarity_cutoff,
+            rerank=rerank,
+            rerank_top_k=rerank_top_k
         )
         
         # 计算执行时间
@@ -181,7 +192,7 @@ async def semantic_search(request):
             'results': search_results.get('results', []),
             'total_count': search_results.get('total_count', 0),
             'page': page,
-            'page_size': page_size,
+            'top_k': top_k,
             'execution_time_ms': execution_time_ms,
             'filters': filters
         }
@@ -194,7 +205,7 @@ async def semantic_search(request):
 
 
 @csrf_exempt
-def chat(request):
+async def chat(request):
     """
     基于已索引内容的对话问答接口
     POST: 处理用户问题并返回基于索引内容的回答
@@ -218,7 +229,7 @@ def chat(request):
         # 验证站点ID (如果提供)
         if site_id:
             try:
-                Site.objects.get(id=site_id)
+                await Site.objects.aget(id=site_id)
             except Site.DoesNotExist:
                 return JsonResponse({'error': f'站点不存在: {site_id}'}, status=400)
         
@@ -232,42 +243,43 @@ def chat(request):
             filters['site_id'] = site_id
         
         # 从索引模块中导入聊天问答函数
-        from src.backend.sitesearch.indexer.chat import generate_chat_response
+        from src.backend.sitesearch.agent.chat_service import ChatService
         
         # 生成回答
-        response_data = generate_chat_response(
-            query=query,
-            chat_history=chat_history,
-            filters=filters
+        response_data = ChatService.get_instance().chat(
+            messages=chat_history,
+            site_id=site_id,
+            session_id=uuid.uuid4().hex
         )
         
         # 计算执行时间
         execution_time_ms = int((time.time() - start_time) * 1000)
         
         # 记录搜索日志
-        client_info = get_client_info(request)
-        search_log = SearchLog(
-            query=query,
-            search_type='chat',
-            site_id=site_id,
-            results_count=len(response_data.get('sources', [])),
-            execution_time_ms=execution_time_ms,
-            user_ip=client_info['user_ip'],
-            user_agent=client_info['user_agent'],
-            filters=filters,
-            result_ids=[s.get('id') for s in response_data.get('sources', [])]
-        )
-        search_log.save()
+        # client_info = get_client_info(request)
+        # search_log = SearchLog(
+        #     query=query,
+        #     search_type='chat',
+        #     site_id=site_id,
+        #     results_count=len(response_data.get('sources', [])),
+        #     execution_time_ms=execution_time_ms,
+        #     user_ip=client_info['user_ip'],
+        #     user_agent=client_info['user_agent'],
+        #     filters=filters,
+        #     result_ids=[s.get('id') for s in response_data.get('sources', [])]
+        # )
+        # search_log.save()
         
-        # 构建响应
-        response = {
-            'query': query,
-            'response': response_data.get('response', ''),
-            'sources': response_data.get('sources', []),
-            'execution_time_ms': execution_time_ms
-        }
+        # # 构建响应
+        # response = {
+        #     'query': query,
+        #     'response': response_data.get('response', ''),
+        #     'sources': response_data.get('sources', []),
+        #     'execution_time_ms': execution_time_ms
+        # }
         
-        return JsonResponse(response)
+        # return JsonResponse(response)
+        return StreamingHttpResponse(format_ndjson(response_data), content_type='application/x-ndjson+json')
         
     except json.JSONDecodeError:
         return JsonResponse({'error': '无效的JSON数据'}, status=400)

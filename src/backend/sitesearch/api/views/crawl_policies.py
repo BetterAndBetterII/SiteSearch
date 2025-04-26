@@ -233,7 +233,7 @@ def execute_crawl_policy(request, site_id, policy_id):
             data = {}
         
         # 获取爬虫进程数量
-        crawler_workers = data.get('crawler_workers', 1)
+        crawler_workers = data.get('crawler_workers', 6)
         
         # 获取管理器实例
         manager = get_manager()
@@ -280,7 +280,8 @@ def execute_crawl_policy(request, site_id, policy_id):
             'task_ids': task_ids,
             'policy_id': policy_id,
             'site_id': site_id,
-            'message': f'已开始执行爬取策略: {policy.name}'
+            'message': f'已开始执行爬取策略: {policy.name}',
+            'task_config': task_config
         })
         
     except Exception as e:

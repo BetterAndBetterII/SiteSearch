@@ -6,6 +6,7 @@ import { MonitorPage } from './pages/MonitorPage';
 import { CrawlPoliciesPage } from './pages/CrawlPoliciesPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 import { ToastProvider } from './components/ui/toast';
+import { ChatPage } from './pages/ChatPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function AppContent() {
     <Layout currentPath={location.pathname}>
       <Routes>
         <Route path="/" element={<SearchPage />} />
+        <Route path="/c" element={<ChatPage />} />
         <Route path="/sites" element={<SitesPage />} />
         <Route path="/sites/:siteId/policy" element={<CrawlPoliciesPage />} />
         <Route path="/sites/:siteId/documents" element={<DocumentsPage />} />

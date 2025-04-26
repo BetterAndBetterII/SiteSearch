@@ -8,7 +8,7 @@ import re
 import time
 from datetime import datetime
 from typing import Dict, List, Set, Optional, Any, Callable
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, unquote, urlunparse
 from pydantic import BaseModel
 
 # 配置日志
@@ -132,26 +132,39 @@ class BaseCrawler:
     
     def normalize_url(self, url: str) -> str:
         """
-        标准化URL（解决相对路径、移除锚点等）
+        标准化URL，处理相对路径、多重编码、锚点、结尾斜杠等。
         
         Args:
             url: 原始URL
-            
+
         Returns:
-            str: 标准化后的URL
+            str: 规范化后的URL
         """
-        # 解析相对URL
+        # Step 1: 解析相对URL
         url = urljoin(self.base_url, url)
-        
-        # 移除URL中的锚点部分
-        if '#' in url:
-            url = url.split('#')[0]
-        
-        # 确保URL以/结尾
-        if not url.endswith('/') and '.' not in url.split('/')[-1]:
-            url = f"{url}/"
-        
-        return url
+
+        # Step 2: 多重解码（避免像 %252525 这种情况）
+        max_decode = 5  # 防止死循环
+        for _ in range(max_decode):
+            decoded = unquote(url)
+            if decoded == url:
+                break
+            url = decoded
+
+        # Step 3: 去掉 URL 的锚点
+        parsed = urlparse(url)
+        parsed = parsed._replace(fragment='')
+
+        # Step 4: 处理路径结尾
+        path = parsed.path
+        if not path.endswith('/') and '.' not in path.split('/')[-1]:
+            path += '/'
+        parsed = parsed._replace(path=path)
+
+        # Step 5: 构建回 URL
+        normalized_url = urlunparse(parsed)
+
+        return normalized_url
     
     def extract_links(self, url: str, html_content: str) -> List[str]:
         """

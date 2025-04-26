@@ -218,7 +218,12 @@ export const documentApi = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-  }
+  },
+
+  // 手动刷新特定页面内容
+  indexDocument: () => request(`/documents/index/`, {
+    method: 'POST',
+  }),
 };
 
 // 搜索API
@@ -235,17 +240,22 @@ export const searchApi = {
     return request(`/semantic-search/${queryString}`);
   },
   
-  // 聊天搜索
-  chat: (data: any) => request('/chat/', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  
   // 搜索反馈
   submitSearchFeedback: (searchLogId: number, data: any) => request(`/search-feedback/${searchLogId}/`, {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+};
+
+// 聊天API
+export const chatApi = {
+  // 聊天搜索
+  chat: async (query: string, site_id?: string, chat_history: any[] = []) => {
+    return await fetch('/api/chat/', {
+      method: 'POST',
+      body: JSON.stringify({ query, site_id, chat_history }),
+    });
+  },
 };
 
 // 定时任务API

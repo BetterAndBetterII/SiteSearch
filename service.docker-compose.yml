@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  sitesearch:
+    build: .
+    ports:
+      - "8089:8000"
+    volumes:
+      - .env:/app/.env
+    restart: unless-stopped
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

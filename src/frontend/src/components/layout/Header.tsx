@@ -12,6 +12,7 @@ interface HeaderProps {
 
 const navItems: NavItem[] = [
   { label: '搜索', path: '/' },
+  { label: '聊天', path: '/c' },
   { label: '站点管理', path: '/sites' },
   { label: '爬取监控', path: '/monitor' }
 ];

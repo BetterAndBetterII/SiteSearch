@@ -50,8 +50,8 @@ class DataIndexer:
         site_id: str,
         redis_namespace_prefix: str = "sitesearch",
         milvus_collection_prefix: str = "sitesearch",
-        chunk_size: int = 512,
-        chunk_overlap: int = 128,
+        chunk_size: int = 1024,
+        chunk_overlap: int = 256,
         similarity_metric: str = "cosine",
         dim: int = None,
         enable_sparse: bool = True,
@@ -350,6 +350,8 @@ class DataIndexer:
         # 执行检索
         qb = QueryBundle(query)
         nodes = await vector_retriever.aretrieve(qb)
+
+        print(f"Nodes: {nodes}")
         
         # 重排序处理
         if rerank:
@@ -363,7 +365,8 @@ class DataIndexer:
             nodes = SimilarityPostprocessor(
                 similarity_cutoff=similarity_cutoff
             ).postprocess_nodes(nodes)
-            nodes = nodes[:top_k]
+
+            print(f"Reranked Nodes: {nodes}")
         
         # 格式化结果
         results = []

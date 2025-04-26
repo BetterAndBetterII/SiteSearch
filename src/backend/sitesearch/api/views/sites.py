@@ -11,6 +11,7 @@ import json
 import re
 
 from src.backend.sitesearch.api.models import Site
+from src.backend.sitesearch.storage.models import SiteDocument
 
 
 @csrf_exempt
@@ -41,7 +42,7 @@ def site_list(request):
         # 分页
         paginator = Paginator(sites, page_size)
         page_obj = paginator.get_page(page)
-        
+
         # 构建响应
         results = []
         for site in page_obj:
@@ -55,7 +56,7 @@ def site_list(request):
                 'created_at': site.created_at.isoformat(),
                 'updated_at': site.updated_at.isoformat(),
                 'last_crawl_time': site.last_crawl_time.isoformat() if site.last_crawl_time else None,
-                'total_documents': site.total_documents
+                'total_documents': SiteDocument.objects.filter(site_id=site.id).count()
             })
         
         return JsonResponse({

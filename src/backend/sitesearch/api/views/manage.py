@@ -126,11 +126,11 @@ def create_task(request):
         try:
             data = json.loads(request.body)
             start_url = data.get('start_url')
-            site_id = data.get('site_id', 'default')
-            max_urls = data.get('max_urls', 1000)
-            max_depth = data.get('max_depth', 3)
+            site_id = data.get('site_id')
+            max_urls = data.get('max_urls')
+            max_depth = data.get('max_depth')
             regpattern = data.get('regpattern', '*')
-            crawler_workers = data.get('crawler_workers', 1)
+            crawler_workers = data.get('crawler_workers', 4)
             crawler_type = data.get('crawler_type', 'httpx')
             
             if not start_url:
@@ -150,7 +150,14 @@ def create_task(request):
             return JsonResponse({
                 'success': True,
                 'task_id': task_id,
-                'message': f'已创建任务 {task_id}'
+                'message': f'已创建任务 {task_id}',
+                'task_config': {
+                    'start_url': start_url,
+                    'site_id': site_id,
+                    'max_urls': max_urls,
+                    'max_depth': max_depth,
+                    'regpattern': regpattern
+                }
             })
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)

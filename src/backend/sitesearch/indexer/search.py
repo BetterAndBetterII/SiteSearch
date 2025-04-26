@@ -69,7 +69,7 @@ async def semantic_search_documents(
     # 执行向量检索，可以传入更多自定义参数
     vector_results = await data_indexer.retrieve(
         query=query,
-        top_k=top_k * 2,  # 获取更多结果，以便后续过滤
+        top_k=top_k,  # 获取更多结果，以便后续过滤
         rerank=rerank,
         rerank_top_k=rerank_top_k,
         similarity_cutoff=similarity_cutoff,

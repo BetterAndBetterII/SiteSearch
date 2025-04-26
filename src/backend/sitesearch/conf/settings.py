@@ -7,8 +7,8 @@ import dotenv
 dotenv.load_dotenv(Path(__file__).resolve().parents[4] / '.env')
 
 # 构建路径，如 src/backend/sitesearch/conf/settings.py
-BASE_DIR = Path(__file__).resolve().parents[3]  # 指向src目录
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # 指向src/backend目录
+BASE_DIR = Path(__file__).resolve().parents[4]  # 指向src目录
+PROJECT_ROOT = Path(__file__).resolve().parents[3]  # 指向src/backend目录
 
 # 保证导入模块正常工作
 sys.path.insert(0, str(BASE_DIR))
@@ -36,7 +36,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -47,7 +47,7 @@ ROOT_URLCONF = 'src.backend.sitesearch.conf.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(PROJECT_ROOT, 'static_collected')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -112,8 +112,10 @@ USE_I18N = True
 USE_TZ = True
 
 # 静态文件 (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_URL = '/assets/'
+STATICFILES_DIRS = [
+    os.path.join(PROJECT_ROOT, 'static_collected', 'assets'),
+]
 
 # 默认主键字段类型
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField' 

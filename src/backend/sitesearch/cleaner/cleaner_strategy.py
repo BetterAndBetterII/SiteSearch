@@ -341,25 +341,20 @@ class MarkItDownStrategy(CleaningStrategy):
         accept_mimetypes = [
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'text/xml'
         ]
-        return any(mimetype.startswith(mimetype) for mimetype in accept_mimetypes)
+        return any(mimetype.startswith(m) for m in accept_mimetypes)
     
     def clean(self, content: bytes | str) -> str:
-        try:
-            # 创建临时文件保存Excel内容
-            temp_path = tempfile.mktemp()
-            with open(temp_path, 'wb') as f:
-                f.write(content)
+        # 创建临时文件保存Excel内容
+        temp_path = tempfile.mktemp()
+        with open(temp_path, 'wb') as f:
+            f.write(content)
 
-            # 使用markitdown
-            output_path = markitdown_converter(temp_path)
-            with open(output_path, 'r', encoding="utf-8") as f:
-                text = f.read()
-            return text
-        except Exception as e:
-            print(f"Excel处理错误: {str(e)}")
-            return f"Excel处理失败: {str(e)}"
+        # 使用markitdown
+        output_path = markitdown_converter(temp_path)
+        with open(output_path, 'r', encoding="utf-8") as f:
+            text = f.read()
+        return text
 
 
 class ImageDiscardStrategy(CleaningStrategy):

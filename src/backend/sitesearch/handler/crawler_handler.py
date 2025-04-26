@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional, List
 import hashlib
 import re
 import base64
+from asgiref.sync import sync_to_async
 
 from src.backend.sitesearch.handler.base_handler import BaseHandler, SkipError
 from src.backend.sitesearch.crawler.httpx_worker import HttpxWorker
@@ -21,7 +22,8 @@ class CrawlerHandler(BaseHandler):
                  batch_size: int = 1,  # 爬虫通常一次处理一个URL
                  sleep_time: float = 0.5,  # 爬虫休眠时间稍长，避免过于频繁请求
                  max_retries: int = 3,
-                 crawler_config: Dict[str, Any] = None):
+                 crawler_config: Dict[str, Any] = None,
+                 auto_exit: bool = False):
         """
         初始化爬虫Handler
         
@@ -44,7 +46,8 @@ class CrawlerHandler(BaseHandler):
             handler_id=handler_id,
             batch_size=batch_size,
             sleep_time=sleep_time,
-            max_retries=max_retries
+            max_retries=max_retries,
+            auto_exit=auto_exit
         )
         
         # 初始化配置
@@ -62,7 +65,7 @@ class CrawlerHandler(BaseHandler):
         self.crawled_urls_key = f"crawler:crawled_urls:{self.input_queue}"
         
         self.logger = logging.getLogger(f"CrawlerHandler:{self.handler_id}")
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.WARNING)
     
     def _init_crawler(self):
         """初始化爬虫实例"""
@@ -123,16 +126,17 @@ class CrawlerHandler(BaseHandler):
         url = self.crawler.normalize_url(url)
         if self._is_url_crawled(url):
             self.logger.info(f"URL已爬取，跳过: {url}")
-            # 清空队列
-            self.redis_client.ltrim(self.input_queue, 0, 0)
             return {
                 "url": url,
                 "status": "skipped",
                 "reason": "already_crawled"
             }
         
-        if self._get_crawled_urls_length() >= self.crawler_config.get("max_urls", 1000):
+        if self._get_crawled_urls_length() >= self.crawler_config.get("max_urls"):
             self.logger.info(f"爬取数量达到限制，跳过: {url}")
+            # 清空队列
+            self.logger.info(f"清空队列: {self.input_queue}")
+            self.redis_client.ltrim(self.input_queue, 0, 0)
             return {
                 "url": url,
                 "status": "skipped",
@@ -189,6 +193,18 @@ class CrawlerHandler(BaseHandler):
             # 记录处理时间
             processing_time = time.time() - start_time
             self.logger.info(f"URL爬取完成: {url} mimetype:{crawl_result.get('mimetype')}, 耗时: {processing_time:.2f}秒")
+
+            # 检查版本
+            from src.backend.sitesearch.storage.manager import DataStorage
+            storage = DataStorage()
+            exists, existing_doc, operation = await sync_to_async(storage.check_exists)(
+                url=url, 
+                site_id=site_id,
+                content_hash=crawl_result.get('content_hash')
+            )
+            if operation == "skip":
+                self.logger.info(f"跳过文档: {url}")
+                raise SkipError(f"跳过文档: {url} 因为版本相同")
             
             return crawl_result
         except SkipError as e:

@@ -56,6 +56,9 @@ importers:
       ndjson:
         specifier: ^2.0.0
         version: 2.0.0
+      ndjson-readablestream:
+        specifier: ^1.2.0
+        version: 1.2.0
       postcss:
         specifier: ^8.5.3
         version: 8.5.3
@@ -1717,6 +1720,9 @@ packages:
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
+
+  ndjson-readablestream@1.2.0:
+    resolution: {integrity: sha512-QbWX2IIfKMVL+ZFHm9vFEzPh1NzZfzJql59T+9XoXzUp8n0wu2t9qgDV9nT0A77YYa6KbAjsHNWzJfpZTfp4xQ==}
 
   ndjson@2.0.0:
     resolution: {integrity: sha512-nGl7LRGrzugTtaFcJMhLbpzJM6XdivmbkdlaGcrk/LXg2KL/YBC6z1g70xh0/al+oFuVFP8N8kiWRucmeEH/qQ==}
@@ -3931,6 +3937,8 @@ snapshots:
   nanoid@3.3.11: {}
 
   natural-compare@1.4.0: {}
+
+  ndjson-readablestream@1.2.0: {}
 
   ndjson@2.0.0:
     dependencies:

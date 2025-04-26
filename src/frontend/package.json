@@ -26,6 +26,7 @@
     "katex": "^0.16.22",
     "lucide-react": "^0.503.0",
     "ndjson": "^2.0.0",
+    "ndjson-readablestream": "^1.2.0",
     "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

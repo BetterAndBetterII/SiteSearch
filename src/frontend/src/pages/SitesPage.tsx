@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { siteApi, crawlPolicyApi, systemApi } from '../api';
+import { siteApi, crawlPolicyApi, systemApi, documentApi } from '../api';
 import { SiteAddModal } from '../components/SiteAddModal';
 import { SiteDeleteModal } from '../components/SiteDeleteModal';  
+import { useToast } from '../components/ui/toast';
 
 // 简单的Spinner组件
 const Spinner = () => (
@@ -24,6 +25,7 @@ interface Site {
 }
 
 export function SitesPage() {
+  const { toast } = useToast();
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +79,23 @@ export function SitesPage() {
       setLoading(false);
     }
   };
-  
+
+  // 手动索引未索引的文档
+  const indexDocuments = async () => {
+    try {
+      await documentApi.indexDocument();
+      toast({
+        title: '手动索引未索引的文档成功',
+      });
+    } catch (err) {
+      console.error('手动索引未索引的文档失败', err);
+      toast({
+        title: '手动索引未索引的文档失败',
+        description: err instanceof Error ? err.message : '未知错误',
+      });
+    }
+  };
+
   // 首次加载时获取站点列表
   useEffect(() => {
     fetchSites();
@@ -166,7 +184,10 @@ export function SitesPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">站点管理</h1>
-        <Button onClick={() => setShowModal(true)}>添加站点</Button>
+        <div className="flex space-x-2">
+          <Button onClick={() => setShowModal(true)}>添加站点</Button>
+          <Button onClick={indexDocuments}>手动索引未索引的文档</Button>
+        </div>
       </div>
       
       {sites.length === 0 ? (

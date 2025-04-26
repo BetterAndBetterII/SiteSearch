@@ -232,7 +232,7 @@ export function CrawlPolicyFormModal({
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md p-2"
                 min="1"
-                max="10000"
+                max="100000"
               />
               <p className="text-xs text-gray-500 mt-1">爬取的最大URL数量</p>
             </div>

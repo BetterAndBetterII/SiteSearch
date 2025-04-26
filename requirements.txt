@@ -14,7 +14,7 @@ requests==2.32.3
 # 文档处理
 pdfminer.six
 pdf2image
-markitdown
+markitdown[all]
 html2text
 
 # 数据库和存储

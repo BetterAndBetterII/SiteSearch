@@ -27,7 +27,8 @@ class HandlerFactory:
         batch_size: int = 1,
         sleep_time: float = 0.5,
         max_retries: int = 3,
-        auto_start: bool = False
+        auto_start: bool = False,
+        auto_exit: bool = False
     ) -> CrawlerHandler:
         """
         创建爬虫Handler
@@ -43,7 +44,7 @@ class HandlerFactory:
             sleep_time: 休眠时间
             max_retries: 最大重试次数
             auto_start: 是否自动启动
-            
+            auto_exit: 是否自动退出
         Returns:
             CrawlerHandler: 爬虫Handler实例
         """
@@ -64,7 +65,8 @@ class HandlerFactory:
             batch_size=batch_size,
             sleep_time=sleep_time,
             max_retries=max_retries,
-            crawler_config=crawler_config
+            crawler_config=crawler_config,
+            auto_exit=auto_exit
         )
 
         # 存储Handler实例

@@ -46,11 +46,12 @@ urlpatterns = [
     # 文档列出，分页，排序，简单搜索；删除
     path('sites/<str:site_id>/documents/list/search/', documents.document_search, name='document_search'),
     path('sites/<str:site_id>/documents/list/delete/', documents.document_delete, name='document_delete'),
+    path('documents/index/', documents.index_document, name='index_document'),
     
     # 搜索模块
     # path('search/', search.search, name='search'),
     path('semantic-search/', search.semantic_search, name='semantic_search'),
-    # path('chat/', search.chat, name='chat'),
+    path('chat/', search.chat, name='chat'),
     # path('search-feedback/<int:search_log_id>/', search.search_feedback, name='search_feedback'),
     
     # 定时任务模块

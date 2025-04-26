@@ -1,10 +1,10 @@
 /**
- * 将时间戳格式化为易读的日期格式
- * @param timestamp 时间戳（毫秒）
+ * 将时间戳或日期对象格式化为易读的日期格式
+ * @param input 时间戳（毫秒）或日期对象
  * @returns 格式化后的日期字符串
  */
-export const formatDate = (timestamp: number): string => {
-  const date = new Date(timestamp);
+export const formatDate = (input: number | Date): string => {
+  const date = input instanceof Date ? input : new Date(input);
   
   // 获取当前日期
   const now = new Date();

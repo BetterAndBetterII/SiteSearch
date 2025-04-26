@@ -374,3 +374,22 @@ def refresh_document(request, site_id, doc_id):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500) 
+    
+def index_document(request):
+    """
+    手动刷新特定页面内容
+    POST: 触发文档刷新任务
+    """
+    try:
+        # 获取管理器实例
+        manager = get_manager()
+
+        # 创建文档索引任务
+        task_id = manager.create_document_index_task()
+        
+        return JsonResponse({'success': True, 'task_id': task_id})
+    
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+    
