@@ -32,6 +32,7 @@ class BaseHandler(ABC):
                  handler_id: str = None,
                  batch_size: int = 1,
                  sleep_time: float = 0.1,
+                 start_delay: float = 0.0,
                  max_retries: int = 3,
                  auto_exit: bool = False):
         """
@@ -59,6 +60,7 @@ class BaseHandler(ABC):
         
         self.batch_size = batch_size
         self.sleep_time = sleep_time
+        self.start_delay = start_delay
         self.max_retries = max_retries
         
         self.status = ComponentStatus.STOPPED
@@ -232,7 +234,7 @@ class BaseHandler(ABC):
                 # 如果没有处理任何任务，则休眠一段时间
                 if processed == 0:
                     if self.auto_exit:
-                        self.logger.info(f"Handler {self.handler_id} 没有处理任何任务，自动退出")
+                        self.logger.warning(f"Handler {self.handler_id} 没有处理任何任务，自动退出")
                         self.stop()
                     else:
                         await asyncio.sleep(self.sleep_time)
@@ -244,6 +246,7 @@ class BaseHandler(ABC):
     
     def _run_loop(self) -> None:
         """在新线程中运行事件循环"""
+        time.sleep(self.start_delay)
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         try:

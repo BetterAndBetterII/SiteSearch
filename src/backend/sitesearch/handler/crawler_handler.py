@@ -21,6 +21,7 @@ class CrawlerHandler(BaseHandler):
                  handler_id: str = None,
                  batch_size: int = 1,  # 爬虫通常一次处理一个URL
                  sleep_time: float = 0.5,  # 爬虫休眠时间稍长，避免过于频繁请求
+                 start_delay: float = 0.0,
                  max_retries: int = 3,
                  crawler_config: Dict[str, Any] = None,
                  auto_exit: bool = False):
@@ -46,6 +47,7 @@ class CrawlerHandler(BaseHandler):
             handler_id=handler_id,
             batch_size=batch_size,
             sleep_time=sleep_time,
+            start_delay=start_delay,
             max_retries=max_retries,
             auto_exit=auto_exit
         )

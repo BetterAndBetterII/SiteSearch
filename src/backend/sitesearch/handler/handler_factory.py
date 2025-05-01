@@ -26,6 +26,7 @@ class HandlerFactory:
         crawler_config: Dict[str, Any] = None,
         batch_size: int = 1,
         sleep_time: float = 0.5,
+        start_delay: float = 0.0,
         max_retries: int = 3,
         auto_start: bool = False,
         auto_exit: bool = False
@@ -42,6 +43,7 @@ class HandlerFactory:
             crawler_config: 爬虫配置
             batch_size: 批处理大小
             sleep_time: 休眠时间
+            start_delay: 启动延迟时间
             max_retries: 最大重试次数
             auto_start: 是否自动启动
             auto_exit: 是否自动退出
@@ -64,6 +66,7 @@ class HandlerFactory:
             handler_id=handler_id,
             batch_size=batch_size,
             sleep_time=sleep_time,
+            start_delay=start_delay,
             max_retries=max_retries,
             crawler_config=crawler_config,
             auto_exit=auto_exit

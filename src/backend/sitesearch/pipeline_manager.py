@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 # 定义每个组件的worker进程函数
-def component_worker(component_type, redis_url, milvus_uri, worker_id, config):
+def component_worker(component_type, redis_url, milvus_uri, worker_id, config, start_delay=0.0):
     """
     组件worker进程的入口函数
     
@@ -62,6 +62,7 @@ def component_worker(component_type, redis_url, milvus_uri, worker_id, config):
                 crawler_config=config.get("crawler_config", {}),
                 batch_size=batch_size,
                 sleep_time=sleep_time,
+                start_delay=start_delay,
                 auto_exit=True
             )
         elif component_type == "cleaner":
@@ -112,11 +113,13 @@ def component_worker(component_type, redis_url, milvus_uri, worker_id, config):
             # 保持进程运行
             try:
                 while True:
+                    if not handler.running:
+                        break
                     # 更新最后活动时间
                     last_activity_key = f"sitesearch:last_activity:{input_queue}"
                     current_time = time.time()
                     redis_client.set(last_activity_key, str(current_time))
-                    
+                        
                     # 获取处理统计信息
                     status = handler.get_stats()
                     
@@ -490,6 +493,18 @@ class MultiProcessSiteSearchManager:
             Dict[str, Any]: 组件状态信息
         """
         processes = self.processes.get(component_type, [])
+
+        # 删除停止的进程
+        dead_processes = [p for p in processes if not p.is_alive()]
+        for p in dead_processes:
+            p.terminate()
+            p.join(timeout=5)
+            if not p.is_alive():
+                print(f"{component_type} 进程 {p.pid} 已正常终止")
+                processes.remove(p)
+            else:
+                print(f"{component_type} 进程 {p.pid} 未能正常终止，强制终止")
+                p.kill()
         
         # 获取活跃进程数
         active_count = sum(1 for p in processes if p.is_alive())
@@ -652,7 +667,7 @@ class MultiProcessSiteSearchManager:
             
             p = Process(
                 target=component_worker,
-                args=("crawler", self.redis_url, self.milvus_uri, f"{task_id}-{i}", task_config)
+                args=("crawler", self.redis_url, self.milvus_uri, f"{task_id}-{i}", task_config, i * 3)
             )
             p.daemon = True
             p.start()
@@ -768,7 +783,7 @@ class MultiProcessSiteSearchManager:
         # 添加队列统计信息（使用get_queue_metrics）
         input_queue = task_info["input_queue"]
         queue_metrics = self.get_queue_metrics(input_queue)
-        
+
         # 检查爬虫进程是否还在运行
         active_processes = sum(1 for p in task_info["processes"] if p.is_alive())
         if active_processes == 0 and queue_metrics["pending"] == 0:
