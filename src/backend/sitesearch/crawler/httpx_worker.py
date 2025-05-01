@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 import threading
 
 from .base_crawler import BaseCrawler
-from ..handler.base_handler import SkipError
+from ..handler.base_handler import SkipError, StatusCodeError
 from ..utils.mime import PLAIN_TEXT_MIMETYPES, BINARY_MIMETYPES
 
 # 配置日志
@@ -192,10 +192,14 @@ class HttpxWorker(BaseCrawler):
 
             if response.status_code // 100 == 4:
                 # 4xx错误，跳过
-                raise SkipError(f"HTTP错误: {response.status_code}")
+                raise StatusCodeError(f"HTTP错误: {response.status_code}", response.status_code)
             elif response.status_code // 100 == 5:
                 # 5xx错误，跳过
-                raise SkipError(f"HTTP错误: {response.status_code}")
+                raise StatusCodeError(f"HTTP错误: {response.status_code}", response.status_code)
+            
+            # 重定向历史记录
+            if response.history:
+                result["redirect_url"] = str(response.history[0].url)
             
             # response.raise_for_status()  # 如果响应码不是2xx，抛出异常
             
@@ -259,7 +263,11 @@ class HttpxWorker(BaseCrawler):
             result["status_code"] = e.response.status_code
             result["error"] = f"HTTP错误: {e.response.status_code}"
             raise
-        
+        except StatusCodeError as e:
+            logger.error(f"HTTP错误 {url}: {e.status_code}")
+            result["status_code"] = e.status_code
+            result["error"] = f"HTTP错误: {e.status_code}"
+            raise e
         except Exception as e:
             logger.error(f"未知错误 {url}: {str(e)}")
             result["error"] = f"未知错误: {str(e)}"

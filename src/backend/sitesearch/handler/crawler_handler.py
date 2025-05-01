@@ -7,7 +7,7 @@ import re
 import base64
 from asgiref.sync import sync_to_async
 
-from src.backend.sitesearch.handler.base_handler import BaseHandler, SkipError
+from src.backend.sitesearch.handler.base_handler import BaseHandler, SkipError, StatusCodeError
 from src.backend.sitesearch.crawler.httpx_worker import HttpxWorker
 
 class CrawlerHandler(BaseHandler):
@@ -119,6 +119,7 @@ class CrawlerHandler(BaseHandler):
         Returns:
             Dict[str, Any]: 爬取结果
         """
+        from src.backend.sitesearch.storage.manager import DataStorage
         # 提取URL和额外参数
         url = task_data.get('url')
         if not url:
@@ -151,10 +152,14 @@ class CrawlerHandler(BaseHandler):
         # 记录开始时间
         start_time = time.time()
         self.logger.info(f"开始爬取URL: {url}")
+        storage = DataStorage()
         
         try:
             # 执行爬取
             crawl_result = self.crawler.crawl_page(url)
+
+            if 'redirect_url' in crawl_result:
+                crawl_result['url'] = crawl_result['redirect_url']
             
             # 计算内容哈希
             if 'content' in crawl_result:
@@ -176,29 +181,26 @@ class CrawlerHandler(BaseHandler):
             crawl_result['crawler_type'] = self.crawler_type
             crawl_result['crawler_config'] = self.crawler_config
             crawl_result['timestamp'] = time.time()
-            
-            # 记录已爬取的URL
-            self._add_url_to_crawled(url)
 
             # 获取links，将没有爬取过的links添加到队列中
-            links = crawl_result.get('links', [])
-            for link in links:
-                link = self.crawler.normalize_url(link)
-                if not self._is_url_crawled(link) and self._is_url_match_pattern(link):
-                    self.redis_client.lpush(self.input_queue, json.dumps({
-                        "url": link,
-                        "site_id": site_id,
-                        "timestamp": time.time(),
-                        "task_id": f"task-{int(time.time())}"
-                    }))
+            if not self._is_url_crawled(crawl_result['url']):
+                links = crawl_result.get('links', [])
+                for link in links:
+                    link = self.crawler.normalize_url(link)
+                    if not self._is_url_crawled(link) and self._is_url_match_pattern(link):
+                        self.redis_client.lpush(self.input_queue, json.dumps({
+                            "url": link,
+                            "site_id": site_id,
+                            "timestamp": time.time(),
+                            "task_id": f"task-{int(time.time())}"
+                        }))
+            self._add_url_to_crawled(crawl_result['url'])
             
             # 记录处理时间
             processing_time = time.time() - start_time
             self.logger.info(f"URL爬取完成: {url} mimetype:{crawl_result.get('mimetype')}, 耗时: {processing_time:.2f}秒")
 
             # 检查版本
-            from src.backend.sitesearch.storage.manager import DataStorage
-            storage = DataStorage()
             exists, existing_doc, operation = await sync_to_async(storage.check_exists)(
                 url=url, 
                 site_id=site_id,
@@ -212,7 +214,34 @@ class CrawlerHandler(BaseHandler):
         except SkipError as e:
             self.logger.info(f"URL爬取跳过: {url}, 原因: {str(e)}")
             raise e
-            
+        except StatusCodeError as e:
+            self.logger.info(f"URL爬取跳过: {url}, 原因: {str(e)}")
+            status_code = e.status_code
+            exists, existing_doc, operation = await sync_to_async(storage.check_exists)(
+                url=url, 
+                site_id=site_id
+            )
+            # operation 可能的值：skip, new_site, edit, new
+            if operation == "skip":
+                # 文档在当前站点中存在且内容未变化，现在访问不了，需要删除
+                return {
+                    "url": url,
+                    "crawler_operation": "delete",
+                    "status_code": status_code,
+                    "timestamp": time.time(),
+                    "site_id": site_id
+                }
+            elif operation == "new_site" or operation == "new":
+                # 跳过
+                return {
+                    "url": url,
+                    "crawler_operation": "skip",
+                    "status_code": status_code,
+                    "timestamp": time.time(),
+                    "site_id": site_id
+                }
+            else:
+                raise e
         except Exception as e:
             # 记录错误
             self.logger.exception(f"爬取URL时发生错误: {url}, 错误: {str(e)}")
@@ -223,3 +252,6 @@ class CrawlerHandler(BaseHandler):
                 "timestamp": time.time(),
                 "site_id": site_id
             } 
+        finally:
+            # 记录已爬取的URL
+            self._add_url_to_crawled(url)

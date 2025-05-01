@@ -70,6 +70,8 @@ class CleanerHandler(BaseHandler):
             if 'status' in task_data and task_data['status'] == 'error':
                 self.logger.info(f"跳过爬取失败的URL: {task_data.get('url', '未知URL')}")
                 raise SkipError(f"跳过爬取失败的URL: {task_data.get('url', '未知URL')}")
+            if 'crawler_operation' in task_data:
+                return task_data
             if 'url' not in task_data or 'content' not in task_data:
                 raise ValueError("任务数据缺少必要字段: url 或 content")
             

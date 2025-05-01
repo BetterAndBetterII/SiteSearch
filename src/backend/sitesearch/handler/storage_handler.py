@@ -75,11 +75,18 @@ class StorageHandler(BaseHandler):
             
             # 首先检查文档是否在当前站点中存在
             # 这里传入site_id参数确保检查文档是否在特定站点中
-            exists, existing_doc, operation = await sync_to_async(self.storage.check_exists)(
-                url=task_data['url'], 
-                site_id=site_id,
-                content_hash=task_data.get('content_hash')
-            )
+            if task_data.get('crawler_operation') == "delete" or task_data.get('crawler_operation') == "skip":
+                exists, existing_doc, operation = await sync_to_async(self.storage.check_exists)(
+                    url=task_data['url'], 
+                    site_id=site_id,
+                )
+                operation = task_data.get('crawler_operation')
+            else:
+                exists, existing_doc, operation = await sync_to_async(self.storage.check_exists)(
+                    url=task_data['url'], 
+                    site_id=site_id,
+                    content_hash=task_data.get('content_hash')
+                )
             
             # 判断不同的操作类型
             if operation == "new":
@@ -89,7 +96,7 @@ class StorageHandler(BaseHandler):
                     document, op = await sync_to_async(self.storage.save_document)(task_data)
                     result = task_data.copy()
                     result['document_id'] = document.id
-                    result['index_operation'] = op
+                    result['index_operation'] = "new"
                     self.logger.info(f"新文档存储完成: {task_data.get('url')}")
                     return result
                 except Exception as e:
@@ -106,7 +113,7 @@ class StorageHandler(BaseHandler):
                     document, op = await sync_to_async(self.storage.save_document)(task_data)
                     result = task_data.copy()
                     result['document_id'] = document.id
-                    result['index_operation'] = op
+                    result['index_operation'] = "new_site"
                     self.logger.info(f"文档已添加到站点 {site_id}: {task_data.get('url')}")
                     return result
                 except Exception as e:
@@ -123,8 +130,11 @@ class StorageHandler(BaseHandler):
                     document, op = await sync_to_async(self.storage.save_document)(task_data)
                     result = task_data.copy()
                     result['document_id'] = document.id
-                    result['index_operation'] = op
+                    result['prev_document_id'] = existing_doc.id
+                    result['prev_content_hash'] = existing_doc.content_hash
+                    result['index_operation'] = "edit"
                     self.logger.info(f"文档更新完成: {task_data.get('url')}")
+                    self.logger.warning(f"更新文档：{result['url']} {result['document_id']} {result['prev_document_id']} {result['prev_content_hash']}")
                     return result
                 except Exception as e:
                     self.logger.exception(f"更新文档时发生错误: {str(e)}")
@@ -132,7 +142,25 @@ class StorageHandler(BaseHandler):
                     result['index_operation'] = "skip"
                     result['error'] = str(e)
                     return result
-            
+                
+            elif operation == "delete":
+                # 文档在当前站点中存在，但需要删除
+                self.logger.info(f"文档 {task_data['url']} 需要删除")
+                try:
+                    await sync_to_async(self.storage.delete_document)(url=task_data['url'], site_id=site_id)
+                    result = task_data.copy()
+                    result['index_operation'] = "delete"
+                    result['document_id'] = existing_doc.id
+                    result['content_hash'] = existing_doc.content_hash
+                    self.logger.info(f"文档删除完成: {task_data.get('url')}")
+                    return result
+                except Exception as e:
+                    self.logger.exception(f"删除文档时发生错误: {str(e)}")
+                    result = task_data.copy()
+                    result['index_operation'] = "skip"
+                    result['error'] = str(e)
+                    return result
+                
             elif operation == "skip":
                 # 文档在当前站点中存在且内容未变化，跳过处理
                 self.logger.info(f"文档 {task_data['url']} 在站点 {site_id} 中已存在且内容未变化，跳过处理")

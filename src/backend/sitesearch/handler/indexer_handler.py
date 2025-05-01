@@ -47,7 +47,7 @@ class IndexerHandler(BaseHandler):
         self.milvus_uri = milvus_uri
         self.storage = DataStorage()
         self.logger = logging.getLogger(f"IndexerHandler:{self.handler_id}")
-        self.logger.setLevel(logging.WARNING)
+        self.logger.setLevel(logging.INFO)
 
         print(f"索引器初始化完成，监听队列：{self.input_queue}")
     
@@ -74,8 +74,13 @@ class IndexerHandler(BaseHandler):
         self.logger.info(f"开始索引文档: {task_data.get('url', '未知URL')}")
 
         # 验证任务数据
+        if "index_operation" in task_data:
+            index_operation = task_data.get('index_operation', 'new')
+            if index_operation == "skip":
+                self.logger.info(f"文档索引跳过: {task_data.get('url', '未知URL')}, 操作: {index_operation}")
+                return {"success": True, "operation": "skip"}
         if 'url' not in task_data or 'document_id' not in task_data:
-            raise ValueError("任务数据缺少必要字段: url 或 document_id")
+            raise ValueError("任务数据缺少必要字段: url 或 document_id", task_data)
         
         # 获取站点ID，如果没有则使用默认值
         site_id = task_data.get('site_id', 'default')
@@ -88,7 +93,7 @@ class IndexerHandler(BaseHandler):
         indexer: DataIndexer = self.get_indexer(site_id)
         
         try:
-            if index_operation == "new" or index_operation == "edit" or index_operation == "skip" or index_operation == "new_site":
+            if index_operation == "new" or index_operation == "new_site":
                 # 添加或更新索引
                 result = await indexer.add_documents([task_data])
                 # 标记文档为已索引
@@ -97,11 +102,20 @@ class IndexerHandler(BaseHandler):
                     
                 self.logger.info(f"文档索引完成: {task_data.get('url', '未知URL')}, 操作: {index_operation}")
                 return {"success": True, "document_ids": result}
-                
+            elif index_operation == "edit":
+                # 更新索引
+                prev_content_hash = task_data['prev_content_hash']
+                removed = await indexer.aremove_documents([prev_content_hash])
+                result = await indexer.add_documents([task_data])
+                self.logger.info(f"文档索引更新完成: {task_data.get('url', '未知URL')}, 操作: {index_operation}")
+                return {"success": True, "document_ids": result}
+            # elif index_operation == "skip":
+            #     self.logger.info(f"文档索引跳过: {task_data.get('url', '未知URL')}, 操作: {index_operation}")
+            #     return {"success": True, "operation": "skip"}
             elif index_operation == "delete":
                 # 删除索引
-                doc_id = f"{site_id}:{task_data.get('content_hash', '')}"
-                await indexer.remove_documents([doc_id])
+                content_hash = task_data.get('content_hash')
+                removed = await indexer.aremove_documents([content_hash])
                 self.logger.info(f"文档索引已删除: {task_data.get('url', '未知URL')}")
                 return {"success": True, "operation": "delete"}
                 
@@ -109,7 +123,7 @@ class IndexerHandler(BaseHandler):
                 raise ValueError(f"未知的索引操作类型: {index_operation}")
                 
         except Exception as e:
-            self.logger.error(f"索引文档时发生错误: {str(e)}")
+            self.logger.exception(f"索引文档时发生错误: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),

@@ -43,7 +43,7 @@ def check_document_exists(url: str, site_id, content_hash: Optional[str] = None)
         Tuple[bool, Optional[Document], str]: 
             - 是否存在
             - 存在的文档对象（如果有）
-            - 操作类型（'new'/'edit'/'skip'）
+            - 操作类型（'new'/'edit'/'skip'/'new_site'）
     """
     try:
         # 先按URL查找，这是主要的唯一性检查

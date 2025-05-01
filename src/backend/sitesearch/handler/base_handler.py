@@ -14,6 +14,22 @@ class SkipError(Exception):
         self.message = message
         super().__init__(self.message)
 
+class StatusCodeError(Exception):
+    """状态码错误类"""
+    """
+    状态码错误类，用于处理HTTP请求返回的状态码错误
+    
+    Args:
+        message: 错误信息
+        status_code: 状态码
+    """
+    status_code: int
+
+    def __init__(self, message: str, status_code: int):
+        self.message = message
+        self.status_code = status_code
+        super().__init__(self.message)
+
 class ComponentStatus:
     """组件状态类"""
     STOPPED = "stopped"
