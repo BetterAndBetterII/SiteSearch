@@ -13,7 +13,7 @@ from llama_index.llms.openai_like import OpenAILike
 from llama_index.storage.docstore.redis import RedisDocumentStore
 from llama_index.postprocessor.jinaai_rerank import JinaRerank
 
-from .custom.milvus_vectorstore import MilvusVectorStore
+from llama_index.vector_stores.milvus import MilvusVectorStore
 from .custom.bgem3_sparse import BGEM3SparseEmbeddingFunction
 from .custom.siliconflow_embeddings import SiliconFlowEmbedding
 

@@ -259,9 +259,9 @@ class MultiProcessSiteSearchManager:
         print("所有组件配置已初始化")
         
     def start_shared_components(self, 
-                              cleaner_workers: int = 1, 
+                              cleaner_workers: int = 2, 
                               storage_workers: int = 1, 
-                              indexer_workers: int = 1):
+                              indexer_workers: int = 4):
         """
         启动共享组件（清洗器、存储器、索引器）
         
@@ -604,7 +604,7 @@ class MultiProcessSiteSearchManager:
             max_depth: int = 3,
             regpattern: str = "*",
             crawler_type: str = "httpx",
-            crawler_workers: int = 6
+            crawler_workers: int = 1
         ) -> str:
         """
         创建新的遍历任务
@@ -689,7 +689,7 @@ class MultiProcessSiteSearchManager:
             site_id: str, 
             urls: List[str],
             crawler_type: str = "httpx",
-            crawler_workers: int = 6
+            crawler_workers: int = 1
         ) -> str:
         """
         创建爬取更新任务

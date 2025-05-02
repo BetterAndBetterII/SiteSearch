@@ -132,7 +132,7 @@ def check_policy_execution(request):
             try:
                 # 创建爬取任务
                 task_ids = []
-                crawler_workers = 6  # 默认工作进程数
+                crawler_workers = 1  # 默认工作进程数
                 
                 for start_url in policy.start_urls:
                     task_id = manager.create_crawl_task(
@@ -197,7 +197,7 @@ def check_policy_execution(request):
                     site_id=site_id,
                     urls=urls,
                     crawler_type="httpx",
-                    crawler_workers=6
+                    crawler_workers=1
                 )
                 
                 # 更新刷新策略的最后刷新时间和下次刷新时间

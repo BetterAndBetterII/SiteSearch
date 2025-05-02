@@ -233,7 +233,7 @@ def execute_crawl_policy(request, site_id, policy_id):
             data = {}
         
         # 获取爬虫进程数量
-        crawler_workers = data.get('crawler_workers', 6)
+        crawler_workers = data.get('crawler_workers', 1)
         
         # 获取管理器实例
         manager = get_manager()
