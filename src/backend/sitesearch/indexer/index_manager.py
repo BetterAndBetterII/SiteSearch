@@ -113,6 +113,12 @@ class DataIndexer:
             similarity_metric=similarity_metric,
             enable_sparse=enable_sparse,
             sparse_embedding_function=sparse_func,
+            index_config={
+                "metric_type": "COSINE",
+                "index_type": "HNSW",
+                "params": {"M": 32, "efConstruction": 200}
+            },
+            search_config={"ef": 128}
         )
         
         # 初始化存储上下文

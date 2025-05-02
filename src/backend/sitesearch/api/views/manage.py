@@ -19,7 +19,7 @@ def get_manager():
         _manager.start_shared_components(
             cleaner_workers=1,
             storage_workers=1,
-            indexer_workers=4
+            indexer_workers=1
         )
         
         # 启动监控

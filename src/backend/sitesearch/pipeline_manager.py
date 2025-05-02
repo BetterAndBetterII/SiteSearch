@@ -632,7 +632,8 @@ class MultiProcessSiteSearchManager:
             "max_urls": max_urls,
             "max_depth": max_depth,
             "regpattern": regpattern,
-            "crawler_type": crawler_type
+            "crawler_type": crawler_type,
+            "bfs": True
         })
 
         task_config = {
@@ -683,6 +684,84 @@ class MultiProcessSiteSearchManager:
         print(f"已创建任务: {task_id}, 起始URL: {start_url}")
         return task_id
     
+    def create_crawl_update_task(
+            self, 
+            site_id: str, 
+            urls: List[str],
+            crawler_type: str = "httpx",
+            crawler_workers: int = 6
+        ) -> str:
+        """
+        创建爬取更新任务
+        
+        Args:
+            site_id: 站点ID
+            urls: 要爬取的URL列表
+            
+        Returns:
+            str: 任务ID
+        """
+        task_id = f"task-{uuid.uuid4().hex[:8]}"
+
+        # 为任务创建特殊的输入队列
+        input_queue = f"sitesearch:task:{task_id}:queue"
+
+        crawler_config = self.component_configs["crawler"]["crawler_config"].copy()
+        crawler_config.update({
+            "max_urls": 99999999,
+            "max_depth": 99999999,
+            "regpattern": "*",
+            "crawler_type": crawler_type,
+            "bfs": False
+        })
+
+        task_config = {
+            "crawler_config": crawler_config,
+            "batch_size": 1,
+            "sleep_time": 0.5,
+            "input_queue": input_queue,
+            "output_queue": "crawler"
+        }
+
+        # 存储任务信息
+        self.tasks[task_id] = {
+            "task_id": task_id,
+            "start_url": urls[0],
+            "site_id": site_id,
+            "max_urls": 99999999,
+            "max_depth": 99999999,
+            "regpattern": "*",
+            "input_queue": input_queue,
+            "crawler_workers": crawler_workers,
+            "start_time": datetime.now().isoformat(),
+            "status": "starting",
+            "crawled_urls": 0,
+            "crawler_config": crawler_config,
+            "batch_size": 1,
+            "sleep_time": 0.5,
+        }
+
+        crawler_processes = []
+        for i in range(crawler_workers):
+            p = Process(
+                target=component_worker,
+                args=("crawler", self.redis_url, self.milvus_uri, f"{task_id}-{i}", task_config, i * 3)
+            )
+            p.daemon = True
+            p.start()
+            crawler_processes.append(p)
+
+        self.processes["crawler"].extend(crawler_processes)
+        self.tasks[task_id]["processes"] = crawler_processes
+        self.tasks[task_id]["status"] = "running"
+
+        for url in urls:
+            self.add_url_to_task_queue(task_id, url, site_id)
+
+        print(f"已创建任务: {task_id}, 爬取更新任务")
+        return task_id
+
+
     def create_document_index_task(self) -> str:
         """
         创建文档索引任务
@@ -759,7 +838,7 @@ class MultiProcessSiteSearchManager:
             
             # 将任务添加到爬取队列
             self.redis_client.lpush(input_queue, json.dumps(task))
-            print(f"已将URL添加到任务 {task_id} 的爬取队列: {url}")
+            print(f"已将URL添加到任务 {input_queue} 的爬取队列: {url}")
             return True
         except Exception as e:
             print(f"添加URL到任务队列失败: {str(e)}")

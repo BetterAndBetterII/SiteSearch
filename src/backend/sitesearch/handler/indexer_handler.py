@@ -123,10 +123,11 @@ class IndexerHandler(BaseHandler):
                 raise ValueError(f"未知的索引操作类型: {index_operation}")
                 
         except Exception as e:
-            self.logger.exception(f"索引文档时发生错误: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "url": task_data.get('url'),
-                "document_id": document_id
-            } 
+            self.logger.exception(f"索引文档时发生错误，操作: {index_operation}, 错误: {str(e)}")
+            raise e
+            # return {
+            #     "success": False,
+            #     "error": str(e),
+            #     "url": task_data.get('url'),
+            #     "document_id": document_id
+            # } 

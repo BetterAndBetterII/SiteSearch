@@ -196,18 +196,21 @@ def execute_refresh(request, site_id):
                     priority_patterns = policy.priority_patterns
             except RefreshPolicy.DoesNotExist:
                 strategy = 'incremental'  # 默认使用增量刷新策略
-        
+
+        # 获取存储管理器
+        from src.backend.sitesearch.storage.utils import get_documents_by_site
+        documents = get_documents_by_site(site_id, limit=99999999)
+        urls = [doc.url for doc in documents]
+
         # 获取管理器实例
         manager = get_manager()
         
         # 创建刷新任务
-        task_id = manager.create_refresh_task(
+        task_id = manager.create_crawl_update_task(
             site_id=site_id,
-            strategy=strategy,
-            url_patterns=url_patterns,
-            exclude_patterns=exclude_patterns,
-            max_age_days=max_age_days,
-            priority_patterns=priority_patterns
+            urls=urls,
+            crawler_type="httpx",
+            crawler_workers=6
         )
         
         # 如果存在刷新策略，更新最后刷新时间和下次刷新时间

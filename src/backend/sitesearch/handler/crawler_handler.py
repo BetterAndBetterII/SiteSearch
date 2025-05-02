@@ -56,7 +56,8 @@ class CrawlerHandler(BaseHandler):
         self.crawler_config = crawler_config or {}
         self.regpattern = self.crawler_config.pop("regpattern", "*")
         self.crawler_type = self.crawler_config.pop("crawler_type", "httpx")
-        
+        self.bfs = self.crawler_config.pop("bfs", True)
+
         # 初始化爬虫
         self._init_crawler()
 
@@ -183,7 +184,7 @@ class CrawlerHandler(BaseHandler):
             crawl_result['timestamp'] = time.time()
 
             # 获取links，将没有爬取过的links添加到队列中
-            if not self._is_url_crawled(crawl_result['url']):
+            if not self._is_url_crawled(crawl_result['url']) and self.bfs:
                 links = crawl_result.get('links', [])
                 for link in links:
                     link = self.crawler.normalize_url(link)

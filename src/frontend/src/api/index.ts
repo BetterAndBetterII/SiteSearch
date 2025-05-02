@@ -294,9 +294,21 @@ export const refreshApi = {
   // 获取刷新策略
   getRefreshPolicy: (siteId: string) => request(`/sites/${siteId}/refresh-policy/`),
   
-  // 设置刷新策略
-  setRefreshPolicy: (siteId: string, data: any) => request(`/sites/${siteId}/refresh-policy/`, {
+  // 创建刷新策略（新增）
+  createRefreshPolicy: (siteId: string, data: any) => request(`/sites/${siteId}/refresh-policy/`, {
     method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  
+  // 更新刷新策略（使用PUT方法）
+  updateRefreshPolicy: (siteId: string, data: any) => request(`/sites/${siteId}/refresh-policy/`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  
+  // 设置刷新策略（兼容旧代码，自动判断使用POST还是PUT）
+  setRefreshPolicy: (siteId: string, data: any, isUpdate = false) => request(`/sites/${siteId}/refresh-policy/`, {
+    method: isUpdate ? 'PUT' : 'POST',
     body: JSON.stringify(data),
   }),
   

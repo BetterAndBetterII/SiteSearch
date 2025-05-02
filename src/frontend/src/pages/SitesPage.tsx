@@ -231,7 +231,14 @@ export function SitesPage() {
                     size="sm"
                     asChild
                   >
-                    <Link to={`/sites/${site.id}/policy`}>设置</Link>
+                    <Link to={`/sites/${site.id}/policy`}>爬取策略</Link>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    asChild
+                  >
+                    <Link to={`/sites/${site.id}/refresh`}>刷新策略</Link>
                   </Button>
                   <Button 
                     variant="ghost" 
