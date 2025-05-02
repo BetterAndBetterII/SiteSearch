@@ -55,6 +55,7 @@ urlpatterns = [
     # path('search-feedback/<int:search_log_id>/', search.search_feedback, name='search_feedback'),
     
     # 定时任务模块
+    path('check-policy-execution/', schedules.check_policy_execution, name='check_policy_execution'),
     path('sites/<str:site_id>/crawl-policies/<int:policy_id>/schedule/', schedules.create_schedule, name='create_schedule'),
     path('sites/<str:site_id>/schedules/', schedules.schedule_list, name='schedule_list'),
     path('sites/<str:site_id>/schedules/<int:schedule_id>/', schedules.schedule_detail, name='schedule_detail'),

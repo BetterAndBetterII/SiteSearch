@@ -118,4 +118,11 @@ STATICFILES_DIRS = [
 ]
 
 # 默认主键字段类型
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField' 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# API服务配置 - 用于内部服务调用
+API_HOST = os.getenv('API_HOST', 'localhost')
+API_PORT = os.getenv('API_PORT', '8085')
+
+# 策略执行检查守护进程配置
+POLICY_CHECK_INTERVAL = int(os.getenv('POLICY_CHECK_INTERVAL', '60')) 

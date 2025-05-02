@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { siteApi, crawlPolicyApi } from '../api';
+import { siteApi, crawlPolicyApi, scheduleApi } from '../api';
 import { CrawlPolicyFormModal } from '../components/CrawlPolicyFormModal';
 
 // 简单的Spinner组件
@@ -33,14 +33,26 @@ interface Site {
   description: string;
 }
 
+// 定时任务类型定义
+interface Schedule {
+  id: number;
+  name: string;
+  schedule_type: string;
+  interval_seconds?: number;
+  enabled: boolean;
+  policy_id: number;
+}
+
 export function CrawlPoliciesPage() {
   // 从React Router获取siteId参数
   const { siteId } = useParams<{ siteId: string }>();
   
   const [site, setSite] = useState<Site | null>(null);
   const [policies, setPolicies] = useState<CrawlPolicy[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [executing, setExecuting] = useState<number | null>(null);
+  const [savingSchedule, setSavingSchedule] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<CrawlPolicy | null>(null);
@@ -69,6 +81,10 @@ export function CrawlPoliciesPage() {
         // 获取爬取策略列表
         const policiesResponse = await crawlPolicyApi.getCrawlPolicies(siteId);
         setPolicies(policiesResponse.results || []);
+        
+        // 获取定时任务列表
+        const schedulesResponse = await scheduleApi.getSchedules(siteId);
+        setSchedules(schedulesResponse.results || []);
         
       } catch (err) {
         console.error('获取数据失败', err);
@@ -167,9 +183,92 @@ export function CrawlPoliciesPage() {
     try {
       const policiesResponse = await crawlPolicyApi.getCrawlPolicies(siteId);
       setPolicies(policiesResponse.results || []);
+      
+      // 刷新定时任务列表
+      const schedulesResponse = await scheduleApi.getSchedules(siteId);
+      setSchedules(schedulesResponse.results || []);
     } catch (err) {
       console.error('刷新策略列表失败', err);
     }
+  };
+  
+  // 更新定时任务
+  const updateSchedule = async (policyId: number, scheduleOption: string) => {
+    if (!siteId) return;
+    
+    try {
+      setSavingSchedule(policyId);
+      
+      // 查找策略的已有定时任务
+      const existingSchedule = schedules.find(s => s.policy_id === policyId);
+      
+      // 根据选项创建或更新定时任务
+      if (scheduleOption === 'never') {
+        // 如果有现有任务，禁用或删除它
+        if (existingSchedule) {
+          if (existingSchedule.enabled) {
+            await scheduleApi.toggleSchedule(siteId, existingSchedule.id);
+          }
+        }
+      } else {
+        // 计算间隔秒数
+        let intervalSeconds = 0;
+        if (scheduleOption === 'daily') {
+          intervalSeconds = 24 * 60 * 60; // 每天
+        } else if (scheduleOption === 'weekly') {
+          intervalSeconds = 7 * 24 * 60 * 60; // 每7天
+        }
+        
+        if (existingSchedule) {
+          // 更新现有任务
+          await scheduleApi.updateSchedule(siteId, existingSchedule.id, {
+            schedule_type: 'interval',
+            interval_seconds: intervalSeconds,
+            enabled: true
+          });
+        } else {
+          // 创建新任务
+          const policy = policies.find(p => p.id === policyId);
+          if (policy) {
+            await scheduleApi.createSchedule(siteId, policyId, {
+              name: `${policy.name}的定时执行`,
+              description: `自动创建的定时执行计划`,
+              schedule_type: 'interval',
+              interval_seconds: intervalSeconds,
+              enabled: true
+            });
+          }
+        }
+      }
+      
+      // 刷新任务列表
+      const schedulesResponse = await scheduleApi.getSchedules(siteId);
+      setSchedules(schedulesResponse.results || []);
+      
+    } catch (err) {
+      console.error('更新定时任务失败', err);
+      setError('更新定时任务失败，请稍后重试');
+    } finally {
+      setSavingSchedule(null);
+    }
+  };
+  
+  // 获取策略的定时任务选项值
+  const getScheduleOption = (policyId: number) => {
+    const schedule = schedules.find(s => s.policy_id === policyId);
+    if (!schedule || !schedule.enabled) {
+      return 'never';
+    }
+    
+    if (schedule.schedule_type === 'interval') {
+      if (schedule.interval_seconds === 24 * 60 * 60) {
+        return 'daily';
+      } else if (schedule.interval_seconds === 7 * 24 * 60 * 60) {
+        return 'weekly';
+      }
+    }
+    
+    return 'never';
   };
   
   if (loading) {
@@ -342,13 +441,33 @@ export function CrawlPoliciesPage() {
                     </div>
                   </div>
                   
-                  <div>
-                    <p className="text-sm font-medium">上次执行</p>
-                    <p className="text-xs text-muted-foreground">
-                      {policy.last_executed 
-                        ? new Date(policy.last_executed).toLocaleString() 
-                        : '从未执行'}
-                    </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-sm font-medium">上次执行</p>
+                      <p className="text-xs text-muted-foreground">
+                        {policy.last_executed 
+                          ? new Date(policy.last_executed).toLocaleString() 
+                          : '从未执行'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">定时执行</p>
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="text-xs border border-gray-300 rounded p-1"
+                          value={getScheduleOption(policy.id)}
+                          onChange={(e) => updateSchedule(policy.id, e.target.value)}
+                          disabled={savingSchedule === policy.id || !policy.enabled}
+                        >
+                          <option value="never">从不</option>
+                          <option value="daily">每天</option>
+                          <option value="weekly">每7天</option>
+                        </select>
+                        {savingSchedule === policy.id && (
+                          <Spinner />
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
