@@ -224,6 +224,25 @@ class DataIndexer:
             return False
         return True
 
+    async def aremove_documents_by_id(self, doc_ids: List[str]) -> bool:
+        """
+        从索引中删除文档
+        
+        Args:
+            doc_ids: 要删除的文档ID列表
+        """
+        try:
+            for doc_id in doc_ids:
+                await self.index.adelete_ref_doc(
+                    ref_doc_id=doc_id,
+                    delete_from_docstore=True
+                )
+            await self.doc_store.adelete_document(doc_ids)
+        except Exception as e:
+            print(f"删除文档失败: {e}")
+            return False
+        return True
+
     async def remove_all_documents(self) -> None:
         """删除该站点的所有文档"""
         all_docs = self.doc_store.docs
@@ -259,6 +278,9 @@ class DataIndexer:
         try:
             return await self.doc_store.aget_document(doc_id)
         except KeyError:
+            return None
+        except ValueError as e:
+            print(f"获取文档失败: {e}")
             return None
 
     async def list_documents(self) -> List[Dict[str, Any]]:
@@ -387,6 +409,10 @@ class DataIndexer:
                     "score": node.score if hasattr(node, 'score') else None,
                     "metadata": doc.metadata
                 })
+            else:
+                print(f"获取文档失败: {node.node.ref_doc_id}")
+                # 获取文档失败，则从索引中删除该文档
+                await self.aremove_documents_by_id([node.node.ref_doc_id])
         
         return results
     
