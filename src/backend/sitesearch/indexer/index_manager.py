@@ -118,7 +118,7 @@ class DataIndexer:
                 "index_type": "HNSW",
                 "params": {"M": 32, "efConstruction": 200}
             },
-            search_config={"ef": 128}
+            search_config={"ef": 512}
         )
         
         # 初始化存储上下文
@@ -340,6 +340,7 @@ class DataIndexer:
         from llama_index.core import QueryBundle
         from llama_index.core.indices.vector_store import VectorIndexRetriever
         from llama_index.core.postprocessor import SimilarityPostprocessor
+        from llama_index.core.vector_stores.types import VectorStoreQueryMode
         
         # 合并默认参数和传入的搜索参数
         search_params = {}
@@ -350,6 +351,7 @@ class DataIndexer:
         vector_retriever = VectorIndexRetriever(
             index=self.index,
             similarity_top_k=top_k,
+            vector_store_query_mode=VectorStoreQueryMode.HYBRID,
             **search_params
         )
         

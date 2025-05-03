@@ -59,10 +59,6 @@ class StorageHandler(BaseHandler):
         """
         self.logger.info(f"开始存储数据: {task_data.get('url', '未知URL')}")
         try:
-            # 验证任务数据
-            if 'url' not in task_data or 'content' not in task_data:
-                raise ValueError("任务数据缺少必要字段: url 或 content")
-            
             # 确保站点ID字段存在
             site_id = task_data.get('site_id')
             if not site_id:
