@@ -23,7 +23,6 @@ services:
     image: pgvector/pgvector:pg17
     volumes:
       - postgres_data_ai:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
