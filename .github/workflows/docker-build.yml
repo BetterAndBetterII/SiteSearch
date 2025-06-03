@@ -2,7 +2,6 @@ name: Build Backend Docker Image
 
 on:
   push:
-    branches: [ "main" ]
     paths:
       - "src/**"
       - ".github/workflows/docker-build.yml"
