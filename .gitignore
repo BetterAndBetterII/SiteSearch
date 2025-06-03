@@ -10,5 +10,4 @@ frontend/build/
 timed_task/log/
 tests/*/*
 volumes/
-*.env
 *.log
