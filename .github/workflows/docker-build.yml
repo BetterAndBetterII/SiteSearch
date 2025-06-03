@@ -5,6 +5,8 @@ on:
     paths:
       - "src/**"
       - ".github/workflows/docker-build.yml"
+      - "Dockerfile"
+      - "requirements.txt"
   workflow_dispatch:
 
 env:

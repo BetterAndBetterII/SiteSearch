@@ -5,7 +5,7 @@ FROM node:20-slim AS frontend-builder
 WORKDIR /app
 
 # 设置npm镜像源
-RUN npm config set registry https://registry.npmmirror.com
+# RUN npm config set registry https://registry.npmmirror.com
 
 # 安装pnpm
 RUN npm install -g pnpm
@@ -28,7 +28,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # 设置apt镜像源
-RUN sed -i 's|http://deb.debian.org|https://mirrors.ustc.edu.cn|g' /etc/apt/sources.list.d/debian.sources
+# RUN sed -i 's|http://deb.debian.org|https://mirrors.ustc.edu.cn|g' /etc/apt/sources.list.d/debian.sources
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -42,7 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 
 # 设置python镜像源
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+# RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt
