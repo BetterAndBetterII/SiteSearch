@@ -8,8 +8,13 @@ class AsyncOpenAI:
     def __init__(self, *args, **kwargs):
         pass
 
+class OpenAI:
+    def __init__(self, *args, **kwargs):
+        pass
+
 setattr(chat_mod, 'ChatCompletionMessageParam', dict)
 openai_mod.AsyncOpenAI = AsyncOpenAI
+openai_mod.OpenAI = OpenAI
 openai_mod.types = types.SimpleNamespace(chat=chat_mod)
 
 sys.modules['openai'] = openai_mod
