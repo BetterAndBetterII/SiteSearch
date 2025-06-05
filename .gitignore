@@ -16,3 +16,5 @@ coverage_report/
 *.cover
 trace_report.dat
 .pytest_cache/
+.coverage
+coverage.xml
