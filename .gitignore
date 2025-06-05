@@ -18,3 +18,4 @@ trace_report.dat
 .pytest_cache/
 .coverage
 coverage.xml
+trace_output/
