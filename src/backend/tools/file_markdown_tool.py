@@ -302,7 +302,7 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
     Returns:
         转换后的Markdown文件路径
     """
-    workers = os.getenv('AI_CONVERTER_WORKERS', 10)
+    workers = int(os.getenv('AI_CONVERTER_WORKERS', 10))
     try:
         # 检查输入文件是否存在
         if not os.path.exists(input_path):
