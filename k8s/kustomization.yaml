@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sitesearch
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - postgres.yaml
+  - redis.yaml
+  - etcd.yaml
+  - minio.yaml
+  - milvus.yaml
+  - sitesearch.yaml
+
+# 可以添加通用标签
+commonLabels:
+  app.kubernetes.io/name: sitesearch
+  app.kubernetes.io/version: latest
+
+# 可以添加资源前缀
+# namePrefix: sitesearch-
+
+# 可以添加镜像替换规则
+# images:
+# - name: ghcr.io/betterandbetterii/sitesearch
+#   newTag: v1.0.0 

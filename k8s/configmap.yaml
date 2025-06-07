@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sitesearch-config
+  namespace: sitesearch
+data:
+  # PostgreSQL 配置
+  POSTGRES_USER: "postgres"
+  POSTGRES_PASSWORD: "postgres"
+  POSTGRES_MULTIPLE_DATABASES: "backend,knowledge"
+  
+  # etcd 配置
+  ETCD_AUTO_COMPACTION_MODE: "revision"
+  ETCD_AUTO_COMPACTION_RETENTION: "1000"
+  ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+  ETCD_SNAPSHOT_COUNT: "50000"
+  
+  # MinIO 配置
+  MINIO_ACCESS_KEY: "minioadmin"
+  MINIO_SECRET_KEY: "minioadmin"
+  
+  # Milvus 配置
+  ETCD_ENDPOINTS: "etcd:2379"
+  MINIO_ADDRESS: "minio:9000" 

@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sitesearch-env
+  namespace: sitesearch
+type: Opaque
+data:
+  # 这里需要将你的 .env 文件内容进行 base64 编码
+  # 使用命令: cat .env | base64 -w 0
+  .env: ""  # 请替换为你的实际 .env 文件内容的 base64 编码
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sitesearch
+  namespace: sitesearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sitesearch
+  template:
+    metadata:
+      labels:
+        app: sitesearch
+    spec:
+      containers:
+      - name: sitesearch
+        image: ghcr.io/betterandbetterii/sitesearch:latest
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - name: env-file
+          mountPath: /app/.env
+          subPath: .env
+          readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        # 添加就绪和存活探针
+        livenessProbe:
+          httpGet:
+            path: /health  # 根据你的应用调整健康检查路径
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health  # 根据你的应用调整健康检查路径
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+      volumes:
+      - name: env-file
+        secret:
+          secretName: sitesearch-env
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -z postgres 5432; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+      - name: wait-for-redis
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -z redis 6379; do
+            echo "Waiting for redis..."
+            sleep 2
+          done
+      - name: wait-for-milvus
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -z milvus 19530; do
+            echo "Waiting for milvus..."
+            sleep 2
+          done
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sitesearch
+  namespace: sitesearch
+spec:
+  selector:
+    app: sitesearch
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP 

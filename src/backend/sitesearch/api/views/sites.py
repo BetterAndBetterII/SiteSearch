@@ -14,6 +14,9 @@ from src.backend.sitesearch.api.models import Site
 from src.backend.sitesearch.storage.models import SiteDocument
 
 
+def health(request):
+    return JsonResponse({'status': 'ok'})
+
 @csrf_exempt
 def site_list(request):
     """

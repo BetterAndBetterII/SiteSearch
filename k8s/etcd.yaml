@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: etcd-pvc
+  namespace: sitesearch
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: etcd
+  namespace: sitesearch
+spec:
+  serviceName: etcd
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etcd
+  template:
+    metadata:
+      labels:
+        app: etcd
+    spec:
+      containers:
+      - name: etcd
+        image: quay.io/coreos/etcd:v3.5.18
+        ports:
+        - containerPort: 2379
+        env:
+        - name: ETCD_AUTO_COMPACTION_MODE
+          valueFrom:
+            configMapKeyRef:
+              name: sitesearch-config
+              key: ETCD_AUTO_COMPACTION_MODE
+        - name: ETCD_AUTO_COMPACTION_RETENTION
+          valueFrom:
+            configMapKeyRef:
+              name: sitesearch-config
+              key: ETCD_AUTO_COMPACTION_RETENTION
+        - name: ETCD_QUOTA_BACKEND_BYTES
+          valueFrom:
+            configMapKeyRef:
+              name: sitesearch-config
+              key: ETCD_QUOTA_BACKEND_BYTES
+        - name: ETCD_SNAPSHOT_COUNT
+          valueFrom:
+            configMapKeyRef:
+              name: sitesearch-config
+              key: ETCD_SNAPSHOT_COUNT
+        command:
+        - etcd
+        args:
+        - -advertise-client-urls=http://127.0.0.1:2379
+        - -listen-client-urls=http://0.0.0.0:2379
+        - --data-dir=/etcd
+        volumeMounts:
+        - name: etcd-storage
+          mountPath: /etcd
+        livenessProbe:
+          exec:
+            command:
+            - etcdctl
+            - endpoint
+            - health
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 20
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: etcd-storage
+        persistentVolumeClaim:
+          claimName: etcd-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd
+  namespace: sitesearch
+spec:
+  selector:
+    app: etcd
+  ports:
+  - port: 2379
+    targetPort: 2379
+  type: ClusterIP 

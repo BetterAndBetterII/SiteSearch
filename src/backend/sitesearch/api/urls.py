@@ -11,6 +11,7 @@ from src.backend.sitesearch.api.views import refresh_policies
 # API 路由配置
 urlpatterns = [
     # 系统状态管理
+    path('health/', sites.health, name='health'),
     path('status/', manage.get_system_status, name='system_status'),
     path('workers/', manage.get_workers_count, name='workers_count'),
     path('queues/', manage.get_queue_metrics, name='all_queues'),

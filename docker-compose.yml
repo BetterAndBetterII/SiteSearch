@@ -1,26 +1,21 @@
 version: '3.8'
 
 services:
-  web:
-    build: .
+  sitesearch:
+    # build: .
+    image: ghcr.io/betterandbetterii/sitesearch:latest
     ports:
-      - "8088:8000"
-    environment:
-      - DEBUG=1
-      - POSTGRES_DB=backend
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_HOST=db
+      - "8089:8000"
     volumes:
-      - ./docker.env:/app/.env
+      - .env:/app/.env
+    restart: unless-stopped
     depends_on:
       - db
-    restart: unless-stopped
     networks:
       - app_network
 
   db:
-    image: pgvector/pgvector:pg17
+    image: postgres:17
     volumes:
       - postgres_data_ai:/var/lib/postgresql/data
     environment:
@@ -103,39 +98,6 @@ services:
     depends_on:
       - "etcd"
       - "minio"
-    networks:
-      - app_network
-
-  bgem3-api:
-    image: ghcr.io/betterandbetterii/feapi:main
-    container_name: bgem3-api
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
-    ports:
-      - "8080:8080"
-    command: "uvicorn main:app --host 0.0.0.0 --port 8080 --workers 4"
-    networks:
-      - app_network
-
-  reranker:
-    image: registry.cn-hangzhou.aliyuncs.com/fastgpt/bge-rerank-v2-m3:v0.1
-    container_name: reranker
-    environment:
-      - ACCESS_TOKEN=mytoken
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
-    ports:
-      - "6006:6006"
     networks:
       - app_network
 
