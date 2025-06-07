@@ -32,6 +32,8 @@ llama_index-postprocessor-siliconflow_rerank
 llama_index-postprocessor-jinaai_rerank
 pymilvus
 
+openai==1.75.0
+
 # 工具库
 tqdm
 retry
