@@ -302,6 +302,7 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
     Returns:
         转换后的Markdown文件路径
     """
+    workers = os.getenv('AI_CONVERTER_WORKERS', 10)
     try:
         # 检查输入文件是否存在
         if not os.path.exists(input_path):
@@ -332,7 +333,7 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
             image_path = image_dir / f"page_1{file_suffix}"
             shutil.copy2(input_path, image_path)
             # 转换为Markdown
-            markdown_path = image_to_markdown(str(image_dir), str(output_file))
+            markdown_path = image_to_markdown(str(image_dir), str(output_file), workers)
         else:
             # 对于PDF和其他文档类型的处理
             if file_suffix == '.pdf' or manual_type == 'pdf':
@@ -366,7 +367,7 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
                 return ""
                 
             # 步骤3: 图片转Markdown
-            markdown_path = image_to_markdown(images_dir, str(output_file))
+            markdown_path = image_to_markdown(images_dir, str(output_file), workers)
             
         if not markdown_path or not os.path.exists(markdown_path):
             print("转换Markdown失败")
