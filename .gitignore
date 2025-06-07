@@ -8,6 +8,14 @@ frontend/build/
 .env
 .vite/
 timed_task/log/
-tests/*/*
 volumes/
 *.log
+
+# Test artifacts
+coverage_report/
+*.cover
+trace_report.dat
+.pytest_cache/
+.coverage
+coverage.xml
+trace_output/
