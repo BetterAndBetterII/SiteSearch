@@ -24,7 +24,7 @@ dotenv.load_dotenv("/root/workspace/SiteSearch/.env", override=True)
 Settings.llm = OpenAILike(
     api_key=os.getenv("OPENAI_API_KEY"),
     api_base=os.getenv("OPENAI_BASE_URL"),
-    model="gpt-4o-mini",
+    model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
     is_chat_model=True,
     max_retries=64,
 )

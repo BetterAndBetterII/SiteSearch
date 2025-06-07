@@ -204,7 +204,7 @@ def image_to_markdown(input_dir: str, output_file: str, workers: int = 30) -> st
             
             # 调用OpenAI API
             response = client.chat.completions.create(
-                model="gemini-1.5-flash-002",
+                model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
                 messages=[
                     {
                         "role": "user",
