@@ -1,5 +1,6 @@
 import os
 import re
+import asyncio
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -400,8 +401,18 @@ class DataIndexer:
         
         # 格式化结果
         results = []
+        doc_ids_to_fetch = [node.node.ref_doc_id for node in nodes]
+        
+        # 并发获取所有相关文档
+        tasks = [self.get_document_by_id(doc_id) for doc_id in doc_ids_to_fetch]
+        fetched_docs_list = await asyncio.gather(*tasks)
+        
+        # 创建文档ID到文档对象的映射以便快速查找
+        fetched_docs = {doc.id_: doc for doc in fetched_docs_list if doc}
+        
+        docs_to_remove = []
         for node in nodes:
-            doc = await self.get_document_by_id(node.node.ref_doc_id)
+            doc = fetched_docs.get(node.node.ref_doc_id)
             if doc:
                 results.append({
                     "id": node.node.ref_doc_id,
@@ -411,8 +422,12 @@ class DataIndexer:
                 })
             else:
                 print(f"获取文档失败: {node.node.ref_doc_id}")
-                # 获取文档失败，则从索引中删除该文档
-                await self.aremove_documents_by_id([node.node.ref_doc_id])
+                # 记录获取失败的文档ID，后续统一删除
+                docs_to_remove.append(node.node.ref_doc_id)
+        
+        # 统一删除所有获取失败的文档
+        if docs_to_remove:
+            await self.aremove_documents_by_id(docs_to_remove)
         
         return results
     
