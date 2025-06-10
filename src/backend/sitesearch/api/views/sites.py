@@ -15,7 +15,12 @@ from src.backend.sitesearch.storage.models import SiteDocument
 
 
 def health(request):
-    return JsonResponse({'status': 'ok'})
+    # 测试连接数据库
+    try:
+        Site.objects.first()
+        return JsonResponse({'status': 'ok'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @csrf_exempt
 def site_list(request):
