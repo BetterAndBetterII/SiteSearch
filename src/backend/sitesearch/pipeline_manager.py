@@ -13,6 +13,7 @@ from multiprocessing import Process
 from typing import Dict, Any, List
 import uuid
 import os
+import psutil
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 
@@ -156,6 +157,7 @@ class MultiProcessSiteSearchManager:
             redis_url: Redis连接URL
             milvus_uri: Milvus连接URI，用于索引器
         """
+        self.main_pid = os.getpid()
         self.redis_url = redis_url
         self.milvus_uri = milvus_uri
         
@@ -484,7 +486,7 @@ class MultiProcessSiteSearchManager:
     
     def get_component_status(self, component_type: str) -> Dict[str, Any]:
         """
-        获取组件状态
+        获取组件状态，包括每个worker进程的资源占用情况
         
         Args:
             component_type: 组件类型
@@ -493,35 +495,64 @@ class MultiProcessSiteSearchManager:
             Dict[str, Any]: 组件状态信息
         """
         processes = self.processes.get(component_type, [])
+        
+        alive_processes = []
+        worker_details = []
+        total_memory_rss_mb = 0
+        total_cpu_percent = 0
 
-        # 删除停止的进程
-        dead_processes = [p for p in processes if not p.is_alive()]
-        for p in dead_processes:
-            p.terminate()
-            p.join(timeout=5)
-            if not p.is_alive():
-                print(f"{component_type} 进程 {p.pid} 已正常终止")
-                processes.remove(p)
+        # 遍历所有已知进程，分离出存活和已死亡的
+        for p in processes:
+            if p.is_alive():
+                alive_processes.append(p)
+                try:
+                    proc_info = psutil.Process(p.pid)
+                    
+                    # This is a blocking call, but necessary for a one-shot CPU reading.
+                    # A small interval is used to minimize delay.
+                    cpu_percent = proc_info.cpu_percent(interval=0.02)
+                    
+                    # Use oneshot() for other, non-blocking stats.
+                    with proc_info.oneshot():
+                        mem_info = proc_info.memory_info()
+                        create_time_ts = proc_info.create_time()
+                        
+                    mem_rss_mb = mem_info.rss / (1024 * 1024)
+                    total_memory_rss_mb += mem_rss_mb
+                    total_cpu_percent += cpu_percent
+
+                    worker_details.append({
+                        "pid": p.pid,
+                        "name": p.name,
+                        "memory_rss_mb": round(mem_rss_mb, 2),
+                        "cpu_percent": round(cpu_percent, 2),
+                        "create_time": datetime.fromtimestamp(create_time_ts).isoformat(),
+                    })
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    # 进程在 is_alive() 和 psutil.Process() 调用之间死掉了,
+                    # 会在下一次检查中被清理
+                    pass
             else:
-                print(f"{component_type} 进程 {p.pid} 未能正常终止，强制终止")
-                p.kill()
+                # 尝试优雅地join已死亡的进程
+                p.join(timeout=0.1)
+
+        # 更新组件的进程列表，只保留存活的
+        if self.processes.get(component_type) is not None:
+            self.processes[component_type] = alive_processes
         
-        # 获取活跃进程数
-        active_count = sum(1 for p in processes if p.is_alive())
-        
-        # 获取组件配置
+        active_count = len(alive_processes)
         config = self.component_configs.get(component_type, {})
-        
-        # 获取队列指标 (对应的队列名称)        
         queue_metrics = self.get_queue_metrics(component_type)
         
         return {
             "type": component_type,
-            "total_processes": len(processes),
             "active_processes": active_count,
             "status": "running" if active_count > 0 else "stopped",
             "config": config,
-            "queue_metrics": queue_metrics
+            "queue_metrics": queue_metrics,
+            "workers": worker_details,
+            "total_memory_rss_mb": round(total_memory_rss_mb, 2),
+            "total_cpu_percent": round(total_cpu_percent, 2),
         }
     
     def get_system_status(self) -> Dict[str, Any]:
@@ -531,18 +562,55 @@ class MultiProcessSiteSearchManager:
         Returns:
             Dict[str, Any]: 系统状态信息
         """
-        import psutil
-        
-        # 获取组件状态
+        # 获取共享组件状态
         components = {}
+
+        # 聚合所有爬虫任务，形成一个'crawler'组件状态
+        all_crawler_workers = []
+        total_crawler_processes = 0
+        total_crawler_memory_mb = 0
+        total_crawler_cpu_percent = 0
+        
+        # 获取所有任务状态, 这会更新任务详情，包括worker信息
+        tasks = self.get_all_tasks_status()
+
+        for task_id, task_info in tasks.items():
+            if task_info.get("status") == "running":
+                total_crawler_processes += task_info.get("active_processes", 0)
+                total_crawler_memory_mb += task_info.get("total_memory_rss_mb", 0)
+                total_crawler_cpu_percent += task_info.get("total_cpu_percent", 0)
+                if "workers" in task_info:
+                    all_crawler_workers.extend(task_info.get("workers", []))
+        
+        # 'crawler' 队列指标是所有爬虫的共享输出队列
+        crawler_queue_metrics = self.get_queue_metrics("crawler")
+
+        components["crawler"] = {
+            "type": "crawler",
+            "active_processes": total_crawler_processes,
+            "status": "running" if total_crawler_processes > 0 else "stopped",
+            "config": self.component_configs.get("crawler", {}),
+            "queue_metrics": crawler_queue_metrics,
+            "workers": all_crawler_workers,
+            "total_memory_rss_mb": round(total_crawler_memory_mb, 2),
+            "total_cpu_percent": round(total_crawler_cpu_percent, 2),
+        }
+
         for component_type in ["cleaner", "storage", "indexer"]:
             components[component_type] = self.get_component_status(component_type)
-        
-        # 获取队列状态
+
+        # 获取所有相关队列的状态
         queues = {}
-        for queue_name in ["crawler", "cleaner", "storage"]:
+        for queue_name in ["crawler", "cleaner", "storage", "indexer"]:
             queues[queue_name] = self.get_queue_metrics(queue_name)
         
+        # 将每个活动任务的队列统计信息也添加到主队列对象中
+        for task_id, task_info in tasks.items():
+            if task_info.get("status") in ["running", "starting"] and "queue_stats" in task_info:
+                task_queue_name = task_info.get("input_queue")
+                if task_queue_name:
+                    queues[task_queue_name] = task_info["queue_stats"]
+
         # 获取系统资源使用情况
         system_resources = {
             "cpu_percent": psutil.cpu_percent(),
@@ -550,8 +618,19 @@ class MultiProcessSiteSearchManager:
             "timestamp": datetime.now().isoformat()
         }
         
-        # 获取所有任务状态
-        tasks = self.get_all_tasks_status()
+        # 获取主进程资源使用情况
+        main_process_resources = {}
+        try:
+            main_proc = psutil.Process(self.main_pid)
+            with main_proc.oneshot():
+                main_process_resources = {
+                    "pid": self.main_pid,
+                    "memory_rss_mb": round(main_proc.memory_info().rss / (1024 * 1024), 2),
+                    "cpu_percent": round(main_proc.cpu_percent(interval=0.02), 2),
+                    "name": main_proc.name()
+                }
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            main_process_resources = {"error": "无法获取主进程信息"}
         
         # 获取工作进程计数
         workers_count = self.get_workers_count()
@@ -561,6 +640,28 @@ class MultiProcessSiteSearchManager:
             "is_active": self.is_monitoring,
             "interval": self.monitor_interval
         }
+
+        # 获取Redis指标
+        redis_stats = {}
+        try:
+            info = self.redis_client.info()
+            db_keys = 0
+            for key in info:
+                if key.startswith("db"):
+                    db_keys += info[key].get('keys', 0)
+
+            redis_stats = {
+                "redis_version": info.get("redis_version"),
+                "used_memory_human": info.get("used_memory_human"),
+                "used_memory_peak_human": info.get("used_memory_peak_human"),
+                "total_system_memory_human": info.get("total_system_memory_human"),
+                "connected_clients": info.get("connected_clients"),
+                "total_keys": db_keys,
+                "uptime_in_days": info.get("uptime_in_days"),
+            }
+        except Exception as e:
+            print(f"无法获取Redis指标: {e}")
+            redis_stats = {"error": str(e)}
         
         return {
             "components": components,
@@ -568,6 +669,8 @@ class MultiProcessSiteSearchManager:
             "tasks": tasks,
             "workers_count": workers_count,
             "system_resources": system_resources,
+            "main_process_resources": main_process_resources,
+            "redis_stats": redis_stats,
             "monitoring": monitoring,
             "timestamp": datetime.now().isoformat()
         }
@@ -846,7 +949,7 @@ class MultiProcessSiteSearchManager:
     
     def get_task_status(self, task_id: str) -> Dict[str, Any]:
         """
-        获取指定任务的状态
+        获取指定任务的状态，包括其worker进程的资源占用情况
         
         Args:
             task_id: 任务ID
@@ -859,13 +962,50 @@ class MultiProcessSiteSearchManager:
         
         task_info = self.tasks[task_id].copy()
         
-        # 添加队列统计信息（使用get_queue_metrics）
         input_queue = task_info["input_queue"]
         queue_metrics = self.get_queue_metrics(input_queue)
 
-        # 检查爬虫进程是否还在运行
-        active_processes = sum(1 for p in task_info["processes"] if p.is_alive())
-        if active_processes == 0 and queue_metrics["pending"] == 0:
+        # 获取任务相关进程的详细信息
+        task_processes = task_info.get("processes", [])
+        alive_processes = []
+        worker_details = []
+        total_memory_rss_mb = 0
+        total_cpu_percent = 0
+
+        for p in task_processes:
+            if p.is_alive():
+                alive_processes.append(p)
+                try:
+                    proc_info = psutil.Process(p.pid)
+
+                    # This is a blocking call, but necessary for a one-shot CPU reading.
+                    cpu_percent = proc_info.cpu_percent(interval=0.02)
+
+                    with proc_info.oneshot():
+                        mem_info = proc_info.memory_info()
+                        create_time_ts = proc_info.create_time()
+
+                    mem_rss_mb = mem_info.rss / (1024 * 1024)
+                    total_memory_rss_mb += mem_rss_mb
+                    total_cpu_percent += cpu_percent
+                    
+                    worker_details.append({
+                        "pid": p.pid,
+                        "name": p.name,
+                        "memory_rss_mb": round(mem_rss_mb, 2),
+                        "cpu_percent": round(cpu_percent, 2),
+                        "create_time": datetime.fromtimestamp(create_time_ts).isoformat(),
+                    })
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            else:
+                p.join(timeout=0.1)
+
+        # 更新任务的进程列表，只保留存活的
+        self.tasks[task_id]["processes"] = alive_processes
+        
+        active_count = len(alive_processes)
+        if active_count == 0 and queue_metrics["pending"] == 0 and queue_metrics["processing"] == 0:
             task_info["status"] = "completed"
         
         # 更新任务状态信息
@@ -877,9 +1017,12 @@ class MultiProcessSiteSearchManager:
             "avg_processing_time": queue_metrics["avg_processing_time"],
             "last_activity": queue_metrics["last_activity"]
         }
-        task_info["active_processes"] = active_processes
+        task_info["active_processes"] = active_count
+        task_info["workers"] = worker_details
+        task_info["total_memory_rss_mb"] = round(total_memory_rss_mb, 2)
+        task_info["total_cpu_percent"] = round(total_cpu_percent, 2)
         
-        # 移除不需要返回的进程对象
+        # 移除不需要返回的原始进程对象
         if "processes" in task_info:
             del task_info["processes"]
         
@@ -919,9 +1062,22 @@ class MultiProcessSiteSearchManager:
         # 从爬虫进程列表中移除
         self.processes["crawler"] = [p for p in self.processes["crawler"] if p not in task_info["processes"]]
         
-        # 清空任务的队列
-        input_queue = task_info["input_queue"]
-        self.redis_client.delete(input_queue)
+        # 清空任务的队列和去重集合
+        input_queue_name = task_info["input_queue"]
+        
+        # 构造所有相关的Redis键
+        full_input_queue_key = f"sitesearch:queue:{input_queue_name}"
+        crawled_urls_key = f"crawler:crawled_urls:{full_input_queue_key}"
+        last_activity_key = f"sitesearch:last_activity:{input_queue_name}"
+        processing_times_key = f"sitesearch:processing_times:{input_queue_name}"
+
+        # 一次性删除所有相关的键
+        self.redis_client.delete(
+            full_input_queue_key, 
+            crawled_urls_key,
+            last_activity_key,
+            processing_times_key
+        )
         
         # 更新任务状态
         task_info["status"] = "stopped"
@@ -943,8 +1099,6 @@ class MultiProcessSiteSearchManager:
     
     def _monitor_loop(self):
         """监控循环，定期检查系统状态和进程状态"""
-        import psutil
-        
         while self.is_monitoring:
             try:
                 # 检查共享组件进程状态
@@ -970,6 +1124,21 @@ class MultiProcessSiteSearchManager:
                             print(f"任务 {task_id} 已完成")
                             task_info["status"] = "completed"
                             task_info["end_time"] = datetime.now().isoformat()
+
+                            # 清理任务相关的Redis数据
+                            input_queue_name = task_info["input_queue"]
+                            full_input_queue_key = f"sitesearch:queue:{input_queue_name}"
+                            crawled_urls_key = f"crawler:crawled_urls:{full_input_queue_key}"
+                            last_activity_key = f"sitesearch:last_activity:{input_queue_name}"
+                            processing_times_key = f"sitesearch:processing_times:{input_queue_name}"
+
+                            self.redis_client.delete(
+                                full_input_queue_key,
+                                crawled_urls_key,
+                                last_activity_key,
+                                processing_times_key
+                            )
+                            print(f"已清理任务 {task_id} 的所有相关Redis键")
                 
                 # 检查cleaner，storage，indexer队列（使用get_queue_metrics）
                 for component in ["crawler", "cleaner", "storage", "indexer"]:
@@ -1008,26 +1177,6 @@ class MultiProcessSiteSearchManager:
             self.monitor_thread.join(timeout=10)
             self.monitor_thread = None
         print("系统监控已停止")
-    
-    # def add_url_to_queue(self, url: str, site_id: str = "default") -> str:
-    #     """
-    #     向爬取队列添加URL（创建一个新的爬取任务）
-        
-    #     Args:
-    #         url: 要爬取的URL
-    #         site_id: 站点ID
-            
-    #     Returns:
-    #         str: 创建的任务ID
-    #     """
-    #     # 创建新任务
-    #     task_id = self.create_crawl_task(
-    #         start_url=url,
-    #         site_id=site_id,
-    #         max_urls=1000,
-    #         max_depth=3
-    #     )
-    #     return task_id
     
     def get_all_tasks_status(self) -> Dict[str, Dict[str, Any]]:
         """

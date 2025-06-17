@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional, List
 import hashlib
 import re
 import base64
+import asyncio
 from asgiref.sync import sync_to_async
 
 from src.backend.sitesearch.handler.base_handler import BaseHandler, SkipError, StatusCodeError
@@ -54,6 +55,7 @@ class CrawlerHandler(BaseHandler):
         
         # 初始化配置
         self.crawler_config = crawler_config or {}
+        self.max_output_queue_len = self.crawler_config.pop("max_output_queue_len", 50000)
         self.regpattern = self.crawler_config.pop("regpattern", "*")
         self.crawler_type = self.crawler_config.pop("crawler_type", "httpx")
         self.bfs = self.crawler_config.pop("bfs", True)
@@ -109,6 +111,19 @@ class CrawlerHandler(BaseHandler):
     def _get_crawled_urls_length(self) -> int:
         """获取爬取历史长度"""
         return self.redis_client.scard(self.crawled_urls_key)
+
+    async def _wait_for_output_queue(self):
+        """如果输出队列已满，则等待，以实现反压"""
+        # 如果 max_output_queue_len <= 0，则禁用此功能
+        if self.max_output_queue_len <= 0:
+            return
+
+        while self.redis_client.llen(self.output_queue) >= self.max_output_queue_len:
+            self.logger.warning(
+                f"Output queue '{self.output_queue}' is full (size >= {self.max_output_queue_len}). "
+                f"Handler '{self.handler_id}' is waiting..."
+            )
+            await asyncio.sleep(2) # 等待2秒后再次检查
 
     async def process_task(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -200,6 +215,9 @@ class CrawlerHandler(BaseHandler):
             # 记录处理时间
             processing_time = time.time() - start_time
             self.logger.info(f"URL爬取完成: {url} mimetype:{crawl_result.get('mimetype')}, 耗时: {processing_time:.2f}秒")
+
+            # 在返回结果前检查输出队列长度，实现反压
+            await self._wait_for_output_queue()
 
             # 检查版本
             exists, existing_doc, operation = await sync_to_async(storage.check_exists)(

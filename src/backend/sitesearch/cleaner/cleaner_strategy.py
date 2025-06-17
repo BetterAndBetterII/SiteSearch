@@ -284,58 +284,35 @@ class PDFStrategy(CleaningStrategy):
 
     def clean(self, content: bytes | str) -> str:
         # 创建临时文件保存PDF内容
-        temp_path = tempfile.mktemp()
-        with open(temp_path, 'wb') as f:
-            f.write(content)
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as temp_file:
+            temp_file.write(content)
+            temp_file.flush() # 确保所有内容都写入磁盘
             
-        # 使用AI转换器处理PDF
-        pdf_path = ai_converter(temp_path, manual_type='pdf')
+            # 使用AI转换器处理PDF
+            markdown_text = ai_converter(temp_file.name, 'pdf')
         
-        # 检查转换结果
-        if not pdf_path or not os.path.exists(pdf_path):
-            raise Exception("PDF转换失败，无法生成Markdown文件")
-            
-        # 读取转换后的文件内容
-        with open(pdf_path, 'r', encoding="utf-8") as f:
-            text = f.read()
-            
-        # 清理表格
-        text = self.markdown_table_cleaner.clean(text)
-        return text
+        return markdown_text
 
 class DocxStrategy(CleaningStrategy):
-    """Docx内容清洗策略"""
+    """DOCX文档清洗策略"""
     
     def should_handle(self, url: str, mimetype: str, content: str) -> bool:
         # application/vnd.openxmlformats-officedocument.wordprocessingml.document
         return mimetype.startswith('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
     def clean(self, content: bytes | str) -> str:
-        try:
-            # 创建临时文件保存Docx内容
-            temp_path = tempfile.mktemp()
-            with open(temp_path, 'wb') as f:
-                f.write(content)
-                
-            # 使用AI转换器处理Docx
-            docx_path = ai_converter(temp_path, manual_type='docx')
+        # 创建临时文件保存DOCX内容
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=True) as temp_file:
+            temp_file.write(content)
+            temp_file.flush() # 确保所有内容都写入磁盘
             
-            # 检查转换结果
-            if not docx_path or not os.path.exists(docx_path):
-                print(f"Docx转换失败，无法生成Markdown文件")
-                return "Docx文件转换失败，无法提取内容"
-                
-            # 读取转换后的文件内容
-            with open(docx_path, 'r', encoding="utf-8") as f:
-                text = f.read()
-                
-            return text
-        except Exception as e:
-            print(f"Docx处理错误: {str(e)}")
-            return f"Docx处理失败: {str(e)}"
+            # 使用AI转换器处理DOCX
+            markdown_text = ai_converter(temp_file.name, 'docx')
         
+        return markdown_text
+
 class MarkItDownStrategy(CleaningStrategy):
-    """Excel内容清洗策略"""
+    """Excel/PPT文档转换为Markdown的策略"""
 
     def should_handle(self, url: str, mimetype: str, content: str) -> bool:
         accept_mimetypes = [
@@ -346,16 +323,11 @@ class MarkItDownStrategy(CleaningStrategy):
     
     def clean(self, content: bytes | str) -> str:
         # 创建临时文件保存Excel内容
-        temp_path = tempfile.mktemp()
-        with open(temp_path, 'wb') as f:
-            f.write(content)
-
-        # 使用markitdown
-        output_path = markitdown_converter(temp_path)
-        with open(output_path, 'r', encoding="utf-8") as f:
-            text = f.read()
-        return text
-
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=True) as temp_file:
+            temp_file.write(content)
+            temp_file.flush()
+            markdown_text = markitdown_converter(temp_file.name)
+        return markdown_text
 
 class ImageDiscardStrategy(CleaningStrategy):
     """图片丢弃策略"""

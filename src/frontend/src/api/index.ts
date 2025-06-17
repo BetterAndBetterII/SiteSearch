@@ -35,22 +35,24 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
   }
 };
 
+import { SystemStatus, QueueMetrics, ComponentStatus } from './types';
+
 // 系统管理API
 export const systemApi = {
   // 获取系统状态
-  getSystemStatus: () => request('/status/'),
+  getSystemStatus: (): Promise<SystemStatus> => request('/status/'),
   
   // 获取工作进程数量
   getWorkersCount: () => request('/workers/'),
   
   // 获取队列指标
-  getQueueMetrics: (queueName?: string) => {
+  getQueueMetrics: (queueName?: string): Promise<QueueMetrics | Record<string, QueueMetrics>> => {
     const endpoint = queueName ? `/queues/${queueName}/` : '/queues/';
     return request(endpoint);
   },
   
   // 获取组件状态
-  getComponentStatus: (componentType?: string) => {
+  getComponentStatus: (componentType?: string): Promise<ComponentStatus | Record<string, ComponentStatus>> => {
     const endpoint = componentType ? `/components/${componentType}/` : '/components/';
     return request(endpoint);
   },

@@ -1,10 +1,11 @@
 # 在Django views.py中实现管理接口
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 import json
 import os
 
-from src.backend.sitesearch.pipeline_manager import component_worker, MultiProcessSiteSearchManager
+from src.backend.sitesearch.pipeline_manager import MultiProcessSiteSearchManager
 # 全局管理器实例
 _manager = None
 
@@ -27,6 +28,7 @@ def get_manager():
     return _manager
 
 @csrf_exempt
+@require_POST
 def manage_components(request):
     """管理组件API"""
     if request.method == 'POST':
@@ -51,20 +53,42 @@ def manage_components(request):
     return JsonResponse({'error': '不支持的请求方法'}, status=405)
 
 @csrf_exempt
+@require_POST
 def scale_workers(request):
-    """扩缩工作进程API"""
-    if request.method == 'POST':
+    """
+    动态扩展或缩减工作进程数量
+    """
+    try:
         data = json.loads(request.body)
         component_type = data.get('component_type')
-        worker_count = data.get('worker_count', 1)
-        
-        # 使用 adjust_workers 方法动态调整工作进程数量
+        target_count = data.get('target_count')
+
+        if not component_type or target_count is None:
+            return JsonResponse({'error': '缺少 component_type 或 target_count 参数'}, status=400)
+
+        # 确保 target_count 是整数
+        try:
+            target_count = int(target_count)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'target_count 必须是有效的整数'}, status=400)
+
         manager = get_manager()
-        result = manager.adjust_workers(component_type, worker_count)
-            
-        return JsonResponse({'success': result})
-    
-    return JsonResponse({'error': '不支持的请求方法'}, status=405)
+        success = manager.adjust_workers(
+            component_type=component_type,
+            target_count=target_count
+        )
+
+        if success:
+            return JsonResponse({
+                'success': True, 
+                'message': f'已成功调整 {component_type} 的工作进程数量至 {target_count}'
+            })
+        else:
+            return JsonResponse({'error': f'调整 {component_type} 失败'}, status=500)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '无效的JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'发生未知错误: {str(e)}'}, status=500)
 
 def get_system_status(request):
     """获取系统状态API"""

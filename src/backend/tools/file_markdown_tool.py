@@ -246,49 +246,35 @@ def image_to_markdown(input_dir: str, output_file: str, workers: int = 30) -> st
         print(f"转换失败: {str(e)}")
         return ""
 
-def markitdown_converter(input_path: str, output_dir: str = None) -> str:
+def markitdown_converter(input_path: str) -> str:
     """
     将文档转换为Markdown格式
     
     Args:
         input_path: 输入文件路径
-        output_dir: 输出目录（可选）
     
     Returns:
-        转换后的文件路径
+        转换后的Markdown文本内容
     """
     try:
-        
         # 检查输入文件是否存在
         input_path = Path(input_path)
         if not input_path.exists():
             raise FileNotFoundError(f"找不到输入文件: {input_path}")
-        # 处理输出路径
-        if output_dir:
-            output_path = Path(output_dir)
-            output_path.mkdir(parents=True, exist_ok=True)
-        else:
-            output_path = input_path.parent
             
-        # 生成输出文件名
-        output_file = output_path / f"{input_path.stem}.md"
-        
         # 初始化转换器
         md = MarkItDown()
         # 转换文档
         result = md.convert(str(input_path))
-        # 保存转换结果
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(result.text_content)
             
-        print(f"转换成功！文件已保存到: {output_file}")
-        return str(output_file)
+        print(f"转换成功！")
+        return result.text_content
         
     except Exception as e:
         print(f"转换失败: {str(e)}")
         return ""
 
-def ai_converter(input_path: str, output_dir: str = None, manual_type: str = None) -> str:
+def ai_converter(input_path: str, manual_type: str = None) -> str:
     """
     通过文档->PDF->图片->Markdown的转换链实现文档到Markdown的转换
     如果输入文件已经是PDF，则跳过文档转PDF步骤
@@ -296,102 +282,78 @@ def ai_converter(input_path: str, output_dir: str = None, manual_type: str = Non
     
     Args:
         input_path: 输入文件路径
-        output_dir: 输出目录（可选）
         manual_type: 手动指定文件类型，可选值为：pdf, docx, pptx, png, jpg, jpeg
 
     Returns:
-        转换后的Markdown文件路径
+        转换后的Markdown文本内容
     """
     workers = int(os.getenv('AI_CONVERTER_WORKERS', 10))
+    temp_dir = tempfile.mkdtemp()
+    
     try:
         # 检查输入文件是否存在
         if not os.path.exists(input_path):
             print(f"文件不存在: {input_path}")
             return ""
             
-        # 创建临时目录
         input_file = Path(input_path)
-        temp_dir = tempfile.mkdtemp()
-        
-        # 处理输出路径
-        if output_dir:
-            output_path = Path(output_dir)
-            output_path.mkdir(parents=True, exist_ok=True)
-        else:
-            output_path = input_file.parent
-        output_file = output_path / f"{input_file.stem}.md"
+        # 所有中间文件和最终的markdown文件都应在临时目录中
+        output_file = Path(temp_dir) / f"{input_file.stem}.md"
 
-        # 获取文件后缀（转换为小写进行比较）
+        # 获取文件后缀
         file_suffix = input_file.suffix.lower()
         
         # 判断输入文件类型
         if file_suffix in ['.png', '.jpg', '.jpeg'] or manual_type in ['png', 'jpg', 'jpeg']:
-            # 如果是图片文件，创建临时图片目录并复制图片
-            image_dir = Path(temp_dir)
-            # 复制图片到临时目录
+            # 图片文件处理
+            image_dir = Path(temp_dir) / "images"
+            image_dir.mkdir()
             import shutil
-            image_path = image_dir / f"page_1{file_suffix}"
-            shutil.copy2(input_path, image_path)
-            # 转换为Markdown
+            shutil.copy2(input_path, image_dir / f"page_1{file_suffix}")
             markdown_path = image_to_markdown(str(image_dir), str(output_file), workers)
         else:
-            # 对于PDF和其他文档类型的处理
+            # 文档和PDF处理
             if file_suffix == '.pdf' or manual_type == 'pdf':
                 pdf_path = input_path
             else:
-                # 步骤1: 转换为PDF
                 pdf_path = doc_to_pdf(input_path, str(temp_dir))
                 if not pdf_path or not os.path.exists(pdf_path):
                     print("文档转PDF失败")
-                    # 清理临时文件
-                    import shutil
-                    shutil.rmtree(temp_dir)
                     return ""
                     
-            # 步骤2: PDF转图片
             images_dir = pdf_to_image(pdf_path, str(temp_dir))
             if not images_dir or not os.path.exists(images_dir):
                 print("PDF转图片失败")
-                # 清理临时文件
-                import shutil
-                shutil.rmtree(temp_dir)
                 return ""
                 
-            # 检查图片目录是否包含图片文件
             image_files = list(Path(images_dir).glob("*.png"))
             if not image_files:
                 print(f"未在{images_dir}目录找到任何PNG图片")
-                # 清理临时文件
-                import shutil
-                shutil.rmtree(temp_dir)
                 return ""
                 
-            # 步骤3: 图片转Markdown
             markdown_path = image_to_markdown(images_dir, str(output_file), workers)
             
         if not markdown_path or not os.path.exists(markdown_path):
             print("转换Markdown失败")
-            # 清理临时文件
-            import shutil
-            shutil.rmtree(temp_dir)
             return ""
             
-        # 清理临时文件
-        import shutil
-        shutil.rmtree(temp_dir)
+        # 读取转换后的Markdown内容
+        with open(markdown_path, 'r', encoding='utf-8') as f:
+            content = f.read()
         
-        return markdown_path
+        return content
         
     except Exception as e:
         print(f"转换失败: {str(e)}")
-        try:
-            # 尝试清理临时文件
-            import shutil
-            if 'temp_dir' in locals() and os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
-        except:
-            pass
         return ""
+    finally:
+        # 无论成功或失败，都确保清理整个临时目录
+        try:
+            import shutil
+            if os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+        except Exception as cleanup_error:
+            print(f"清理临时目录时发生错误: {cleanup_error}")
 
 def main():
     # 创建命令行参数解析器
@@ -406,7 +368,7 @@ def main():
     if args.use_ai:
         ai_converter(args.input, args.output)
     else:
-        markitdown_converter(args.input, args.output)
+        markitdown_converter(args.input)
 
 if __name__ == "__main__":
     # main()

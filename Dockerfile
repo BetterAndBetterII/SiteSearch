@@ -64,4 +64,5 @@ COPY --from=frontend-builder /app/dist/ /app/src/static_collected/
 EXPOSE 8000
 
 # 设置启动命令
+# daphne -b 0.0.0.0 -p 8000 src.backend.sitesearch.conf.asgi:application
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "src.backend.sitesearch.conf.asgi:application"]

@@ -199,19 +199,44 @@ def execute_refresh(request, site_id):
 
         # 获取存储管理器
         from src.backend.sitesearch.storage.utils import get_documents_by_site
-        documents = get_documents_by_site(site_id, limit=99999999)
-        urls = [doc.url for doc in documents]
-
+        
         # 获取管理器实例
         manager = get_manager()
+
+        # 为了避免一次性加载所有URL到内存，我们分批处理
+        # 首先获取第一个文档来创建任务
+        documents_first_batch = get_documents_by_site(site_id, limit=200, offset=0)
         
-        # 创建刷新任务
+        if not documents_first_batch:
+            return JsonResponse({'message': '站点没有需要刷新的文档'}, status=200)
+
+        initial_urls = [doc.url for doc in documents_first_batch]
+        
+        # 使用第一批URL创建刷新任务
         task_id = manager.create_crawl_update_task(
             site_id=site_id,
-            urls=urls,
+            urls=initial_urls,
             crawler_type="httpx",
             crawler_workers=6
         )
+
+        # 分批获取剩余的URL并添加到任务队列
+        batch_size = 200
+        offset = len(initial_urls)
+        while True:
+            documents_batch = get_documents_by_site(site_id, limit=batch_size, offset=offset)
+            if not documents_batch:
+                break
+            
+            # 将批处理的URL添加到任务队列
+            for doc in documents_batch:
+                manager.add_url_to_task_queue(task_id, doc.url, site_id)
+            
+            # 如果获取到的批次小于指定的批次大小，说明是最后一批
+            if len(documents_batch) < batch_size:
+                break
+                
+            offset += len(documents_batch)
         
         # 如果存在刷新策略，更新最后刷新时间和下次刷新时间
         try:

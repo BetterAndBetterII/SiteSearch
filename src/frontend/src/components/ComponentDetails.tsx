@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Card, 
   CardContent,
@@ -8,35 +8,12 @@ import {
 } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ChevronDown, ChevronUp, Clock, MinusCircle, PlusCircle, RefreshCw, Settings, Users } from 'lucide-react';
-
-// 组件详情类型定义
-export type ComponentDetails = {
-  id: string;
-  type: string;
-  total_processes: number;
-  active_processes: number;
-  status: string;
-  config: {
-    [key: string]: any;
-    batch_size?: number;
-    sleep_time?: number;
-  };
-  queue_metrics: {
-    pending: number;
-    processing: number;
-    completed: number;
-    failed: number;
-    avg_processing_time: number;
-    last_activity: string | null;
-  };
-  uptime?: string;
-  memory?: string;
-  cpu?: string;
-};
+import { ChevronDown, ChevronUp, Clock, MinusCircle, PlusCircle, RefreshCw, Settings, Users, Server, Cpu, MemoryStick, Info } from 'lucide-react';
+import { ComponentStatus } from '../api/types';
 
 interface ComponentDetailsCardProps {
-  component: ComponentDetails;
+  component: ComponentStatus;
+  id: string;
   onRestartComponent?: (componentId: string) => Promise<void>;
   onScaleComponent?: (componentId: string, count: number) => Promise<void>;
   isRestarting?: boolean;
@@ -45,6 +22,7 @@ interface ComponentDetailsCardProps {
 
 export function ComponentDetailsCard({ 
   component, 
+  id,
   onRestartComponent,
   onScaleComponent,
   isRestarting = false,
@@ -52,8 +30,15 @@ export function ComponentDetailsCard({
 }: ComponentDetailsCardProps) {
   const [showConfig, setShowConfig] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
-  const [scaleCount, setScaleCount] = useState<number>(component.total_processes);
+  const [showWorkers, setShowWorkers] = useState(false);
+  const [scaleCount, setScaleCount] = useState<number>(component.active_processes);
   
+  useEffect(() => {
+    setScaleCount(component.active_processes);
+  }, [component.active_processes]);
+
+  console.log(component);
+
   // 格式化时间
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '无数据';
@@ -69,7 +54,7 @@ export function ComponentDetailsCard({
   // 格式化处理时间
   const formatProcessingTime = (time: number) => {
     if (time < 0.001) {
-      return `${(time * 1000).toFixed(2)}μs`;
+      return `${(time * 1000000).toFixed(2)}µs`;
     } else if (time < 1) {
       return `${(time * 1000).toFixed(2)}ms`;
     } else if (time < 60) {
@@ -88,12 +73,6 @@ export function ComponentDetailsCard({
     if (total === 0) return 0;
     return (completed / total) * 100;
   };
-  
-  // 计算活跃百分比
-  const calculateActivePercentage = () => {
-    if (component.total_processes === 0) return 0;
-    return (component.active_processes / component.total_processes) * 100;
-  };
 
   // 处理扩缩容
   const handleScaleChange = (increment: boolean) => {
@@ -105,8 +84,8 @@ export function ComponentDetailsCard({
   
   // 应用扩缩容
   const applyScale = async () => {
-    if (onScaleComponent && scaleCount !== component.total_processes) {
-      await onScaleComponent(component.id, scaleCount);
+    if (onScaleComponent && scaleCount !== component.active_processes) {
+      await onScaleComponent(id, scaleCount);
     }
   };
 
@@ -123,24 +102,17 @@ export function ComponentDetailsCard({
               </Badge>
             </div>
             <CardDescription className="mt-1">
-              进程: {component.active_processes}/{component.total_processes} 活跃
+              进程: {component.active_processes} 活跃
             </CardDescription>
           </div>
           
           <div className="flex items-center gap-2">
-            {component.uptime && (
-              <div className="flex items-center text-xs text-muted-foreground" title="运行时间">
-                <Clock size={14} className="mr-1" />
-                {component.uptime}
-              </div>
-            )}
-            
             {component.status !== 'running' && onRestartComponent && (
               <Button 
                 size="sm" 
                 variant="outline"
                 disabled={isRestarting}
-                onClick={() => onRestartComponent(component.id)}
+                onClick={() => onRestartComponent(id)}
               >
                 {isRestarting ? (
                   <span className="flex items-center">
@@ -174,18 +146,16 @@ export function ComponentDetailsCard({
           </div>
         </div>
         
-        {/* 进程状态 */}
-        <div className="mb-4">
-          <div className="flex justify-between text-xs text-muted-foreground mb-1">
-            <span>进程活跃度</span>
-            <span>{calculateActivePercentage().toFixed(0)}%</span>
-          </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-green-500 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, calculateActivePercentage())}%` }}
-            ></div>
-          </div>
+        {/* 总资源使用 */}
+        <div className="flex justify-around text-center mb-4 p-3 border rounded-md bg-muted/30">
+            <div>
+              <p className="text-muted-foreground text-xs flex items-center justify-center"><MemoryStick size={12} className="mr-1" />总内存</p>
+              <p className="font-bold text-lg">{component.total_memory_rss_mb.toFixed(2)} <span className="text-sm font-normal">MB</span></p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs flex items-center justify-center"><Cpu size={12} className="mr-1" />总CPU</p>
+              <p className="font-bold text-lg">{component.total_cpu_percent.toFixed(2)} <span className="text-sm font-normal">%</span></p>
+            </div>
         </div>
         
         {/* 扩缩容控制 */}
@@ -197,7 +167,7 @@ export function ComponentDetailsCard({
                 <span>实例数量</span>
               </div>
               <Badge variant="secondary">
-                当前: {component.total_processes}
+                当前: {component.active_processes}
               </Badge>
             </div>
             
@@ -232,7 +202,7 @@ export function ComponentDetailsCard({
                 size="sm" 
                 variant="default" 
                 className="ml-auto"
-                disabled={isScaling || scaleCount === component.total_processes}
+                disabled={isScaling || scaleCount === component.active_processes}
                 onClick={applyScale}
               >
                 {isScaling ? (
@@ -240,10 +210,10 @@ export function ComponentDetailsCard({
                     <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1"></div>
                     处理中
                   </span>
-                ) : scaleCount > component.total_processes ? (
-                  <span>扩容 (+{scaleCount - component.total_processes})</span>
-                ) : scaleCount < component.total_processes ? (
-                  <span>缩容 (-{component.total_processes - scaleCount})</span>
+                ) : scaleCount > component.active_processes ? (
+                  <span>扩容 (+{scaleCount - component.active_processes})</span>
+                ) : scaleCount < component.active_processes ? (
+                  <span>缩容 (-{component.active_processes - scaleCount})</span>
                 ) : (
                   <span>应用变更</span>
                 )}
@@ -252,6 +222,55 @@ export function ComponentDetailsCard({
           </div>
         )}
         
+        {/* 工作进程列表 */}
+        <div className="mb-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full flex justify-between items-center p-2 h-auto mb-2"
+            onClick={() => setShowWorkers(!showWorkers)}
+          >
+            <span className="font-medium flex items-center">
+              <Server size={14} className="mr-1" />
+              工作进程 ({component.workers ? component.workers.length : 0})
+            </span>
+            {showWorkers ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </Button>
+          
+          {showWorkers && (
+            <div className="bg-muted/50 rounded-md p-3 text-sm space-y-2">
+              {component.workers && component.workers.length > 0 ? (
+                component.workers.map(worker => (
+                  <div key={worker.pid} className="p-2 border-b last:border-b-0">
+                    <div className="flex justify-between items-center font-semibold">
+                      <span>{worker.name} (PID: {worker.pid})</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-1">
+                      <div className="flex items-center">
+                        <MemoryStick size={12} className="mr-1 text-muted-foreground" />
+                        <span>内存: {worker.memory_rss_mb.toFixed(2)} MB</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Cpu size={12} className="mr-1 text-muted-foreground" />
+                        <span>CPU: {worker.cpu_percent.toFixed(2)} %</span>
+                      </div>
+                      <div className="flex items-center col-span-2">
+                        <Clock size={12} className="mr-1 text-muted-foreground" />
+                        <span>启动于: {formatDate(worker.create_time)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-muted-foreground p-2">
+                   <Info size={14} className="inline-block mr-1" />
+                   没有活动的进程
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* 队列指标 */}
         <div className="mb-3">
           <Button 
@@ -361,24 +380,6 @@ export function ComponentDetailsCard({
           )}
         </div>
         
-        {/* 系统资源使用 */}
-        {(component.memory || component.cpu) && (
-          <div className="flex justify-between mt-4 pt-2 border-t border-border text-sm">
-            {component.memory && (
-              <div>
-                <p className="text-muted-foreground text-xs">内存</p>
-                <p className="font-medium">{component.memory}</p>
-              </div>
-            )}
-            
-            {component.cpu && (
-              <div>
-                <p className="text-muted-foreground text-xs">CPU</p>
-                <p className="font-medium">{component.cpu}%</p>
-              </div>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
