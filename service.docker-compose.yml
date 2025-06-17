@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   sitesearch:
-    build: .
+    # build: .
+    image: ghcr.io/betterandbetterii/sitesearch:20250617-0749
     ports:
       - "8089:8000"
     volumes:

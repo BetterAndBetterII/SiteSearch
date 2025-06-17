@@ -7,6 +7,7 @@ from .crawler_handler import CrawlerHandler
 from .cleaner_handler import CleanerHandler
 from .storage_handler import StorageHandler
 from .indexer_handler import IndexerHandler
+from .refresh_handler import RefreshHandler
 
 logger = logging.getLogger("handler_factory")
 
@@ -250,6 +251,54 @@ class HandlerFactory:
         if auto_start:
             handler.start()
         
+        return handler
+    
+    @classmethod
+    def create_refresh_handler(
+        cls,
+        redis_url: str,
+        handler_id: str = None,
+        input_queue: str = "refresh",
+        batch_size: int = 1,
+        sleep_time: float = 1.0,
+        max_retries: int = 3,
+        auto_start: bool = False
+    ) -> "RefreshHandler":
+        """
+        创建刷新器Handler
+        
+        Args:
+            redis_url: Redis连接URL
+            handler_id: Handler标识符
+            input_queue: 输入队列名称
+            batch_size: 批处理大小
+            sleep_time: 休眠时间
+            max_retries: 最大重试次数
+            auto_start: 是否自动启动
+            
+        Returns:
+            RefreshHandler: 刷新器Handler实例
+        """
+        handler_id = handler_id or f"refresh-{len(cls._handlers)}"
+        
+        if handler_id in cls._handlers:
+            logger.warning(f"已存在ID为 {handler_id} 的Handler，返回现有实例")
+            return cls._handlers[handler_id]
+        
+        handler = RefreshHandler(
+            redis_url=redis_url,
+            handler_id=handler_id,
+            input_queue=input_queue,
+            batch_size=batch_size,
+            sleep_time=sleep_time,
+            max_retries=max_retries,
+        )
+        
+        cls._handlers[handler_id] = handler
+        
+        if auto_start:
+            handler.start()
+            
         return handler
     
     @classmethod

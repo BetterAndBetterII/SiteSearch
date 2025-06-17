@@ -27,7 +27,7 @@ def component_worker(component_type, redis_url, milvus_uri, worker_id, config, s
     组件worker进程的入口函数
     
     Args:
-        component_type: 组件类型 (crawler, cleaner, storage, indexer)
+        component_type: 组件类型 (crawler, cleaner, storage, indexer, refresh)
         redis_url: Redis连接URL
         milvus_uri: Milvus连接URI (仅用于索引器)
         worker_id: worker ID
@@ -88,6 +88,14 @@ def component_worker(component_type, redis_url, milvus_uri, worker_id, config, s
                 redis_url=redis_url,
                 milvus_uri=milvus_uri,
                 handler_id=handler_id,
+                batch_size=batch_size,
+                sleep_time=sleep_time
+            )
+        elif component_type == "refresh":
+            handler = HandlerFactory.create_refresh_handler(
+                redis_url=redis_url,
+                handler_id=handler_id,
+                input_queue="sitesearch:queue:refresh", # 固定监听刷新队列
                 batch_size=batch_size,
                 sleep_time=sleep_time
             )
@@ -169,7 +177,8 @@ class MultiProcessSiteSearchManager:
             "crawler": [],
             "cleaner": [],
             "storage": [],
-            "indexer": []
+            "indexer": [],
+            "refresh": []
         }
         
         # 组件配置
@@ -177,7 +186,8 @@ class MultiProcessSiteSearchManager:
             "crawler": {},
             "cleaner": {},
             "storage": {},
-            "indexer": {}
+            "indexer": {},
+            "refresh": {}
         }
 
         # 任务管理
@@ -203,7 +213,7 @@ class MultiProcessSiteSearchManager:
         设置队列，策略：删除已完成的，未完成的放到队列头部，失败的由用户决定
         """
         # 删除已完成的
-        for queue_name in ["crawler", "cleaner", "storage", "indexer"]:
+        for queue_name in ["crawler", "cleaner", "storage", "indexer", "refresh"]:
             self.redis_client.delete(f"sitesearch:processing:{queue_name}")
             self.redis_client.delete(f"sitesearch:completed:{queue_name}")
             self.redis_client.delete(f"sitesearch:failed:{queue_name}")
@@ -223,7 +233,8 @@ class MultiProcessSiteSearchManager:
                             crawler_config: Dict[str, Any] = None,
                             cleaner_strategies: List = None,
                             storage_config: Dict[str, Any] = None,
-                            indexer_config: Dict[str, Any] = None):
+                            indexer_config: Dict[str, Any] = None,
+                            refresh_config: Dict[str, Any] = None):
         """
         初始化所有组件配置
         
@@ -232,6 +243,7 @@ class MultiProcessSiteSearchManager:
             cleaner_strategies: 清洗策略列表
             storage_config: 存储配置
             indexer_config: 索引器配置
+            refresh_config: 刷新器配置
         """
         # 存储配置
         self.component_configs["crawler"] = {
@@ -257,20 +269,28 @@ class MultiProcessSiteSearchManager:
             "batch_size": 8,
             "sleep_time": 0.2
         }
+
+        self.component_configs["refresh"] = {
+            "refresh_config": refresh_config or {},
+            "batch_size": 1, # 刷新任务通常是单个处理
+            "sleep_time": 1
+        }
         
         print("所有组件配置已初始化")
         
     def start_shared_components(self, 
                               cleaner_workers: int = 2, 
                               storage_workers: int = 1, 
-                              indexer_workers: int = 4):
+                              indexer_workers: int = 4,
+                              refresh_workers: int = 1):
         """
-        启动共享组件（清洗器、存储器、索引器）
+        启动共享组件（清洗器、存储器、索引器、刷新器）
         
         Args:
             cleaner_workers: 清洗器worker数量
             storage_workers: 存储器worker数量
             indexer_workers: 索引器worker数量
+            refresh_workers: 刷新器worker数量
         """
         # 启动清洗器workers
         for i in range(cleaner_workers):
@@ -305,6 +325,17 @@ class MultiProcessSiteSearchManager:
                 p.start()
                 self.processes["indexer"].append(p)
                 print(f"已启动索引器进程 {i}")
+        
+        # 启动刷新器workers
+        for i in range(refresh_workers):
+            p = Process(
+                target=component_worker,
+                args=("refresh", self.redis_url, self.milvus_uri, i, self.component_configs["refresh"])
+            )
+            p.daemon = True
+            p.start()
+            self.processes["refresh"].append(p)
+            print(f"已启动刷新器进程 {i}")
                 
         print("所有共享组件进程已启动")
     
@@ -320,7 +351,7 @@ class MultiProcessSiteSearchManager:
             bool: 是否成功调整
         """
         # 确保组件类型有效
-        if component_type not in ["crawler", "cleaner", "storage", "indexer"]:
+        if component_type not in ["crawler", "cleaner", "storage", "indexer", "refresh"]:
             print(f"无效的组件类型: {component_type}，只能调整共享组件")
             return False
             
@@ -418,7 +449,7 @@ class MultiProcessSiteSearchManager:
         result = {}
         
         # 获取共享组件的进程数
-        for component_type in ["cleaner", "storage", "indexer"]:
+        for component_type in ["cleaner", "storage", "indexer", "refresh"]:
             result[component_type] = len(self.processes[component_type])
         
         # 获取爬虫进程数（按任务分组）
@@ -596,12 +627,12 @@ class MultiProcessSiteSearchManager:
             "total_cpu_percent": round(total_crawler_cpu_percent, 2),
         }
 
-        for component_type in ["cleaner", "storage", "indexer"]:
+        for component_type in ["cleaner", "storage", "indexer", "refresh"]:
             components[component_type] = self.get_component_status(component_type)
 
         # 获取所有相关队列的状态
         queues = {}
-        for queue_name in ["crawler", "cleaner", "storage", "indexer"]:
+        for queue_name in ["crawler", "cleaner", "storage", "indexer", "refresh"]:
             queues[queue_name] = self.get_queue_metrics(queue_name)
         
         # 将每个活动任务的队列统计信息也添加到主队列对象中
@@ -829,7 +860,7 @@ class MultiProcessSiteSearchManager:
         # 存储任务信息
         self.tasks[task_id] = {
             "task_id": task_id,
-            "start_url": urls[0],
+            "start_url": urls[0] if urls else None,
             "site_id": site_id,
             "max_urls": 99999999,
             "max_depth": 99999999,
@@ -913,7 +944,7 @@ class MultiProcessSiteSearchManager:
         Args:
             task_id: 任务ID
             url: 要爬取的URL
-            site_id: 站点ID (如果为None，使用任务的默认site_id)
+            site_id: 站点ID (如果为None, 使用任务的默认site_id)
             
         Returns:
             bool: 是否成功添加
@@ -924,12 +955,13 @@ class MultiProcessSiteSearchManager:
                 print(f"任务不存在: {task_id}")
                 return False
             
-            # 如果没有指定site_id，使用任务默认的site_id
+            # 如果没有指定site_id, 使用任务默认的site_id
             if site_id is None:
                 site_id = self.tasks[task_id]["site_id"]
             
-            # 获取任务的输入队列名称
-            input_queue = f"sitesearch:queue:{self.tasks[task_id]['input_queue']}"
+            # 获取任务的输入队列名称, 并构造完整的队列键
+            base_input_queue = self.tasks[task_id]['input_queue']
+            full_input_queue = f"sitesearch:queue:{base_input_queue}"
             
             # 准备爬取任务
             task = {
@@ -940,8 +972,8 @@ class MultiProcessSiteSearchManager:
             }
             
             # 将任务添加到爬取队列
-            self.redis_client.lpush(input_queue, json.dumps(task))
-            print(f"已将URL添加到任务 {input_queue} 的爬取队列: {url}")
+            self.redis_client.lpush(full_input_queue, json.dumps(task))
+            print(f"已将URL添加到任务 {task_id} 的爬取队列 {full_input_queue}: {url}")
             return True
         except Exception as e:
             print(f"添加URL到任务队列失败: {str(e)}")
@@ -1102,7 +1134,7 @@ class MultiProcessSiteSearchManager:
         while self.is_monitoring:
             try:
                 # 检查共享组件进程状态
-                for component in ["crawler", "cleaner", "storage", "indexer"]:
+                for component in ["crawler", "cleaner", "storage", "indexer", "refresh"]:
                     alive_count = sum(1 for p in self.processes[component] if p.is_alive())
                     print(f"{component}: {alive_count}/{len(self.processes[component])} 个进程活跃")
                 
@@ -1141,7 +1173,7 @@ class MultiProcessSiteSearchManager:
                             print(f"已清理任务 {task_id} 的所有相关Redis键")
                 
                 # 检查cleaner，storage，indexer队列（使用get_queue_metrics）
-                for component in ["crawler", "cleaner", "storage", "indexer"]:
+                for component in ["crawler", "cleaner", "storage", "indexer", "refresh"]:
                     # 获取正确的队列名称                    
                     queue_metrics = self.get_queue_metrics(component)
                     print(f"{component} 队列状态:")
@@ -1202,18 +1234,18 @@ class MultiProcessSiteSearchManager:
             self.stop_task(task_id)
         
         # 关闭共享组件进程
-        for component in ["cleaner", "storage", "indexer"]:
+        for component in ["cleaner", "storage", "indexer", "refresh"]:
             for proc in self.processes[component]:
                 if proc.is_alive():
                     proc.terminate()
             
         # 等待所有进程结束
-        for component in ["cleaner", "storage", "indexer"]:
+        for component in ["cleaner", "storage", "indexer", "refresh"]:
             for proc in self.processes[component]:
                 proc.join(timeout=5)
                 
         # 检查是否有未结束的进程
-        for component in ["cleaner", "storage", "indexer"]:
+        for component in ["cleaner", "storage", "indexer", "refresh"]:
             for i, proc in enumerate(self.processes[component]):
                 if proc.is_alive():
                     print(f"{component} 进程 {i} 未能正常终止，强制终止")
@@ -1222,7 +1254,7 @@ class MultiProcessSiteSearchManager:
         # 清空队列
         print("清理Redis队列...")
         # 清理共享队列
-        for queue_name in ["crawler", "cleaner", "storage"]:
+        for queue_name in ["crawler", "cleaner", "storage", "indexer", "refresh"]:
             self.redis_client.delete(f"sitesearch:queue:{queue_name}")
             self.redis_client.delete(f"sitesearch:processing:{queue_name}")
             self.redis_client.delete(f"sitesearch:completed:{queue_name}")

@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 import json
 from django.utils import timezone
 import datetime
+import uuid
 
 from src.backend.sitesearch.api.models import Site, CrawlPolicy, ScheduleTask, RefreshPolicy
 from src.backend.sitesearch.api.views.manage import get_manager
@@ -187,18 +188,21 @@ def check_policy_execution(request):
             try:
                 refresh_policy = RefreshPolicy.objects.get(id=site_result['refresh_policy']['id'])
                 
-                # 获取存储管理器
-                from src.backend.sitesearch.storage.utils import get_documents_by_site
-                documents = get_documents_by_site(site_id, limit=99999999)
-                urls = [doc.url for doc in documents]
+                # 构造刷新任务数据
+                task_data = {
+                    'task_type': 'site_refresh',
+                    'task_id': f"schedule-refresh-{site_id}-{uuid.uuid4().hex[:8]}",
+                    'site_id': site_id,
+                    'strategy': refresh_policy.strategy,
+                    'url_patterns': refresh_policy.url_patterns,
+                    'exclude_patterns': refresh_policy.exclude_patterns,
+                    'max_age_days': refresh_policy.max_age_days,
+                    'priority_patterns': refresh_policy.priority_patterns
+                }
                 
-                # 创建刷新任务
-                task_id = manager.create_crawl_update_task(
-                    site_id=site_id,
-                    urls=urls,
-                    crawler_type="httpx",
-                    crawler_workers=1
-                )
+                # 将任务推送到刷新队列
+                refresh_queue_name = "sitesearch:queue:refresh"
+                manager.redis_client.lpush(refresh_queue_name, json.dumps(task_data))
                 
                 # 更新刷新策略的最后刷新时间和下次刷新时间
                 refresh_policy.last_refresh = current_time
@@ -212,7 +216,7 @@ def check_policy_execution(request):
                     'policy_id': refresh_policy.id,
                     'policy_type': 'refresh',
                     'policy_name': refresh_policy.name,
-                    'task_id': task_id,
+                    'task_id': task_data['task_id'],
                     'executed_at': current_time.isoformat()
                 })
             except Exception as e:

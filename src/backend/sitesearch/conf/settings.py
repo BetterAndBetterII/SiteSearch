@@ -28,8 +28,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # 项目应用
-    'src.backend.sitesearch.storage',
-    'src.backend.sitesearch.api',
+    'src.backend.sitesearch.storage.apps.StorageConfig',
+    'src.backend.sitesearch.api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [

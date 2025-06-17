@@ -11,23 +11,8 @@ def init_django():
     # 设置Django设置模块
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'src.backend.sitesearch.conf.settings')
     
-    # 如果没有完整的Django项目，可以手动配置设置
-    if not settings.configured:
-        settings.configure(
-            DATABASES={
-                'default': {
-                    'ENGINE': 'django.db.backends.postgresql',  # 或其他数据库引擎
-                    'NAME': os.getenv('DB_NAME'),
-                    'USER': os.getenv('DB_USER'),
-                    'PASSWORD': os.getenv('DB_PASSWORD'),
-                    'HOST': os.getenv('DB_HOST'),
-                    'PORT': os.getenv('DB_PORT'),
-                }
-            },
-            INSTALLED_APPS=[
-                'src.backend.sitesearch.storage',  # 包含models.py的应用
-            ],
-        )
+    # 不要在这里调用 settings.configure() 来覆盖项目的设置，否则会导致 INSTALLED_APPS 缺失。
+    # 只要确保 DJANGO_SETTINGS_MODULE 环境变量正确即可，django.setup() 会自动加载完整配置。
     
     # 初始化Django
     django.setup()
