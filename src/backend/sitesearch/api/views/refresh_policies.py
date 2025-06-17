@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 import json
 from django.utils import timezone
+import threading
 
 from src.backend.sitesearch.api.models import Site, RefreshPolicy
 from src.backend.sitesearch.api.views.manage import get_manager
@@ -155,6 +156,76 @@ def refresh_policy(request, site_id):
     return JsonResponse({'error': '不支持的请求方法'}, status=405)
 
 
+def _run_refresh_task(site_id, strategy, url_patterns, exclude_patterns, max_age_days, priority_patterns):
+    """
+    在后台线程中执行刷新任务的函数。
+    """
+    try:
+        # 在线程内重新获取对象以确保线程安全
+        from src.backend.sitesearch.storage.utils import get_documents_by_site
+        from src.backend.sitesearch.api.models import Site, RefreshPolicy
+        from src.backend.sitesearch.api.views.manage import get_manager
+        from django.utils import timezone
+        import datetime
+
+        site = Site.objects.get(id=site_id)
+        manager = get_manager()
+
+        # 为了避免一次性加载所有URL到内存，我们分批处理
+        documents_first_batch = get_documents_by_site(site_id, limit=200, offset=0)
+        
+        if not documents_first_batch:
+            print(f"站点 {site_id} 没有需要刷新的文档")
+            return
+
+        initial_urls = [doc.url for doc in documents_first_batch]
+        
+        # 使用第一批URL创建刷新任务
+        task_id = manager.create_crawl_update_task(
+            site_id=site_id,
+            urls=initial_urls,
+            crawler_type="httpx",
+            crawler_workers=6
+        )
+
+        # 分批获取剩余的URL并添加到任务队列
+        batch_size = 200
+        offset = len(initial_urls)
+        while True:
+            documents_batch = get_documents_by_site(site_id, limit=batch_size, offset=offset)
+            if not documents_batch:
+                break
+            
+            # 将批处理的URL添加到任务队列
+            for doc in documents_batch:
+                manager.add_url_to_task_queue(task_id, doc.url, site_id)
+            
+            # 如果获取到的批次小于指定的批次大小，说明是最后一批
+            if len(documents_batch) < batch_size:
+                break
+                
+            offset += len(documents_batch)
+        
+        # 如果存在刷新策略，更新最后刷新时间和下次刷新时间
+        try:
+            policy = RefreshPolicy.objects.get(site=site)
+            policy.last_refresh = timezone.now()
+            
+            # 计算下次刷新时间
+            if policy.enabled:
+                policy.next_refresh = policy.last_refresh + datetime.timedelta(days=policy.refresh_interval_days)
+            
+            policy.save()
+        except RefreshPolicy.DoesNotExist:
+            pass
+
+        print(f"站点 {site_id} 的后台刷新任务已完成，任务ID: {task_id}")
+
+    except Exception as e:
+        # 在生产环境中，应该使用更健壮的日志记录
+        print(f"后台刷新任务失败，站点ID: {site_id}, 错误: {e}")
+
+
 @csrf_exempt
 def execute_refresh(request, site_id):
     """
@@ -197,67 +268,19 @@ def execute_refresh(request, site_id):
             except RefreshPolicy.DoesNotExist:
                 strategy = 'incremental'  # 默认使用增量刷新策略
 
-        # 获取存储管理器
-        from src.backend.sitesearch.storage.utils import get_documents_by_site
-        
-        # 获取管理器实例
-        manager = get_manager()
-
-        # 为了避免一次性加载所有URL到内存，我们分批处理
-        # 首先获取第一个文档来创建任务
-        documents_first_batch = get_documents_by_site(site_id, limit=200, offset=0)
-        
-        if not documents_first_batch:
-            return JsonResponse({'message': '站点没有需要刷新的文档'}, status=200)
-
-        initial_urls = [doc.url for doc in documents_first_batch]
-        
-        # 使用第一批URL创建刷新任务
-        task_id = manager.create_crawl_update_task(
-            site_id=site_id,
-            urls=initial_urls,
-            crawler_type="httpx",
-            crawler_workers=6
+        # 启动后台线程执行刷新任务
+        thread = threading.Thread(
+            target=_run_refresh_task,
+            args=(site_id, strategy, url_patterns, exclude_patterns, max_age_days, priority_patterns)
         )
+        thread.daemon = True  # 确保主进程退出时线程也会退出
+        thread.start()
 
-        # 分批获取剩余的URL并添加到任务队列
-        batch_size = 200
-        offset = len(initial_urls)
-        while True:
-            documents_batch = get_documents_by_site(site_id, limit=batch_size, offset=offset)
-            if not documents_batch:
-                break
-            
-            # 将批处理的URL添加到任务队列
-            for doc in documents_batch:
-                manager.add_url_to_task_queue(task_id, doc.url, site_id)
-            
-            # 如果获取到的批次小于指定的批次大小，说明是最后一批
-            if len(documents_batch) < batch_size:
-                break
-                
-            offset += len(documents_batch)
-        
-        # 如果存在刷新策略，更新最后刷新时间和下次刷新时间
-        try:
-            policy = RefreshPolicy.objects.get(site=site)
-            policy.last_refresh = timezone.now()
-            
-            # 计算下次刷新时间
-            if policy.enabled:
-                import datetime
-                policy.next_refresh = policy.last_refresh + datetime.timedelta(days=policy.refresh_interval_days)
-            
-            policy.save()
-        except RefreshPolicy.DoesNotExist:
-            pass
-        
         return JsonResponse({
             'success': True,
-            'task_id': task_id,
             'site_id': site_id,
             'strategy': strategy,
-            'message': f'已开始执行站点内容刷新，使用策略: {strategy}'
+            'message': f'已开始在后台执行站点内容刷新，使用策略: {strategy}'
         })
         
     except Exception as e:
