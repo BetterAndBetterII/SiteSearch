@@ -6,7 +6,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 import json
+import asyncio
 from django.utils import timezone
+from asgiref.sync import sync_to_async
 
 from src.backend.sitesearch.api.models import Site, RefreshPolicy
 from src.backend.sitesearch.api.views.manage import get_manager
@@ -156,7 +158,7 @@ def refresh_policy(request, site_id):
 
 
 @csrf_exempt
-def execute_refresh(request, site_id):
+async def execute_refresh(request, site_id):
     """
     执行站点全量内容刷新
     POST: 触发站点内容刷新任务
@@ -166,7 +168,7 @@ def execute_refresh(request, site_id):
     
     try:
         # 验证站点是否存在
-        site = get_object_or_404(Site, id=site_id)
+        site = await sync_to_async(get_object_or_404)(Site, id=site_id)
         
         # 解析请求体中的可选参数
         try:
@@ -184,7 +186,7 @@ def execute_refresh(request, site_id):
         # 如果未指定策略，尝试使用站点的默认刷新策略
         if not strategy:
             try:
-                policy = RefreshPolicy.objects.get(site=site)
+                policy = await RefreshPolicy.objects.aget(site=site)
                 strategy = policy.strategy
                 if not url_patterns:
                     url_patterns = policy.url_patterns
@@ -205,7 +207,7 @@ def execute_refresh(request, site_id):
 
         # 为了避免一次性加载所有URL到内存，我们分批处理
         # 首先获取第一个文档来创建任务
-        documents_first_batch = get_documents_by_site(site_id, limit=200, offset=0)
+        documents_first_batch = await sync_to_async(get_documents_by_site)(site_id, limit=200, offset=0)
         
         if not documents_first_batch:
             return JsonResponse({'message': '站点没有需要刷新的文档'}, status=200)
@@ -224,23 +226,25 @@ def execute_refresh(request, site_id):
         batch_size = 200
         offset = len(initial_urls)
         while True:
-            documents_batch = get_documents_by_site(site_id, limit=batch_size, offset=offset)
+            documents_batch = await sync_to_async(get_documents_by_site)(site_id, limit=batch_size, offset=offset)
             if not documents_batch:
                 break
             
             # 将批处理的URL添加到任务队列
             for doc in documents_batch:
-                manager.add_url_to_task_queue(task_id, doc.url, site_id)
+                await sync_to_async(manager.add_url_to_task_queue)(task_id, doc.url, site_id)
             
             # 如果获取到的批次小于指定的批次大小，说明是最后一批
             if len(documents_batch) < batch_size:
                 break
                 
             offset += len(documents_batch)
+
+            await asyncio.sleep(0.5)
         
         # 如果存在刷新策略，更新最后刷新时间和下次刷新时间
         try:
-            policy = RefreshPolicy.objects.get(site=site)
+            policy = await RefreshPolicy.objects.aget(site=site)
             policy.last_refresh = timezone.now()
             
             # 计算下次刷新时间
