@@ -1,6 +1,8 @@
 import os
 import re
 import asyncio
+import time
+import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -20,6 +22,9 @@ from .custom.siliconflow_embeddings import SiliconFlowEmbedding
 
 # 加载环境变量
 dotenv.load_dotenv("/root/workspace/SiteSearch/.env", override=True)
+
+# 添加性能监控日志配置
+logger = logging.getLogger(__name__)
 
 # 配置LLM设置
 Settings.llm = OpenAILike(
@@ -360,15 +365,29 @@ class DataIndexer:
         Returns:
             List[Dict[str, Any]]: 检索结果列表
         """
+        # 记录总体开始时间
+        total_start_time = time.time()
+        performance_metrics = {}
+        
+        logger.info(f"Starting vector retrieve for site {self.site_id} - Query: '{query}' | Top-K: {top_k} | Rerank: {rerank}")
+        
         from llama_index.core import QueryBundle
         from llama_index.core.indices.vector_store import VectorIndexRetriever
         from llama_index.core.postprocessor import SimilarityPostprocessor
         from llama_index.core.vector_stores.types import VectorStoreQueryMode
         
+        # 阶段1: 参数准备
+        prep_start_time = time.time()
+        
         # 合并默认参数和传入的搜索参数
         search_params = {}
         if search_kwargs:
             search_params.update(search_kwargs)
+        
+        performance_metrics['preparation'] = (time.time() - prep_start_time) * 1000
+        
+        # 阶段2: 创建检索器
+        retriever_start_time = time.time()
         
         # 创建检索器
         vector_retriever = VectorIndexRetriever(
@@ -378,14 +397,23 @@ class DataIndexer:
             **search_params
         )
         
+        performance_metrics['create_retriever'] = (time.time() - retriever_start_time) * 1000
+        
+        # 阶段3: 执行向量检索
+        vector_search_start_time = time.time()
+        
         # 执行检索
         qb = QueryBundle(query)
         nodes = await vector_retriever.aretrieve(qb)
 
-        print(f"Nodes: {nodes}")
+        performance_metrics['vector_search'] = (time.time() - vector_search_start_time) * 1000
         
-        # 重排序处理
+        logger.info(f"Vector search completed: {performance_metrics['vector_search']:.2f}ms, found {len(nodes)} nodes")
+        
+        # 阶段4: 重排序处理
         if rerank:
+            rerank_start_time = time.time()
+            
             reranker = JinaRerank(
                 base_url=os.getenv("RERANKER_BASE_URL"),
                 model="bge-reranker-v2-m3",
@@ -393,11 +421,25 @@ class DataIndexer:
                 top_n=rerank_top_k,
             )
             nodes = reranker.postprocess_nodes(nodes, qb)
+            
+            performance_metrics['rerank'] = (time.time() - rerank_start_time) * 1000
+            
+            # 相似度过滤
+            similarity_filter_start_time = time.time()
+            
             nodes = SimilarityPostprocessor(
                 similarity_cutoff=similarity_cutoff
             ).postprocess_nodes(nodes)
-
-            print(f"Reranked Nodes: {nodes}")
+            
+            performance_metrics['similarity_filter'] = (time.time() - similarity_filter_start_time) * 1000
+            
+            logger.info(f"Reranking completed: {performance_metrics['rerank']:.2f}ms, filtered to {len(nodes)} nodes")
+        else:
+            performance_metrics['rerank'] = 0
+            performance_metrics['similarity_filter'] = 0
+        
+        # 阶段5: 文档获取和结果格式化
+        format_start_time = time.time()
         
         # 格式化结果
         results = []
@@ -428,6 +470,32 @@ class DataIndexer:
         # 统一删除所有获取失败的文档
         if docs_to_remove:
             await self.aremove_documents_by_id(docs_to_remove)
+            logger.warning(f"Removed {len(docs_to_remove)} failed documents: {docs_to_remove}")
+        
+        performance_metrics['format_results'] = (time.time() - format_start_time) * 1000
+        
+        # 计算总耗时
+        total_time = (time.time() - total_start_time) * 1000
+        performance_metrics['total'] = total_time
+        
+        # 输出详细性能日志
+        logger.info(f"Vector Retrieve Performance for site {self.site_id} - Query: '{query}'")
+        logger.info(f"  ├─ Preparation: {performance_metrics['preparation']:.2f}ms")
+        logger.info(f"  ├─ Create Retriever: {performance_metrics['create_retriever']:.2f}ms")
+        logger.info(f"  ├─ Vector Search: {performance_metrics['vector_search']:.2f}ms")
+        logger.info(f"  ├─ Reranking: {performance_metrics['rerank']:.2f}ms")
+        logger.info(f"  ├─ Similarity Filter: {performance_metrics['similarity_filter']:.2f}ms")
+        logger.info(f"  ├─ Format Results: {performance_metrics['format_results']:.2f}ms")
+        logger.info(f"  └─ Total Retrieve: {performance_metrics['total']:.2f}ms")
+        logger.info(f"Retrieved {len(results)} documents after processing")
+        
+        # 计算各阶段占比
+        if total_time > 0:
+            logger.info("Vector Retrieve Breakdown:")
+            logger.info(f"  ├─ Vector Search: {(performance_metrics['vector_search']/performance_metrics['total']*100):.1f}%")
+            logger.info(f"  ├─ Reranking: {(performance_metrics['rerank']/performance_metrics['total']*100):.1f}%")
+            logger.info(f"  ├─ Format Results: {(performance_metrics['format_results']/performance_metrics['total']*100):.1f}%")
+            logger.info(f"  └─ Other: {((performance_metrics['preparation']+performance_metrics['create_retriever']+performance_metrics['similarity_filter'])/performance_metrics['total']*100):.1f}%")
         
         return results
     

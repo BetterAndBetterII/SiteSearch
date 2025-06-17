@@ -10,10 +10,13 @@ import os
 from django.core.paginator import Paginator
 import traceback
 import uuid
+import logging
 
 from src.backend.sitesearch.api.models import Site, SearchLog
 from src.backend.sitesearch.agent.chat_service import ChatService
 
+# 添加性能监控日志配置
+logger = logging.getLogger(__name__)
 
 def get_client_info(request):
     """获取客户端信息"""
@@ -121,7 +124,15 @@ async def semantic_search(request):
     语义搜索接口
     GET: 执行语义搜索，支持自然语言查询和相关度排序
     """
+    # 记录总体开始时间
+    import time
+    total_start_time = time.time()
+    performance_metrics = {}
+    
     try:
+        # 阶段1: 参数解析和验证
+        parse_start_time = time.time()
+        
         # 获取查询参数
         query = request.GET.get('q', '')
         site_id = request.GET.get('site_id')
@@ -129,12 +140,19 @@ async def semantic_search(request):
         top_k = int(request.GET.get('top_k', 5))
         filter_mimetype = request.GET.get('mimetype')
         similarity_cutoff = float(request.GET.get('similarity_cutoff', 0.6))
-        rerank = request.GET.get('rerank', True)
+        rerank = str(request.GET.get('rerank', 'True')).lower() == 'true'
         rerank_top_k = int(request.GET.get('rerank_top_k', 10))
+
+        logger.info(f"Semantic Search - Query: '{query}' | Site: {site_id} | Page: {page} | Top K: {top_k} | Filter Mimetype: {filter_mimetype} | Similarity Cutoff: {similarity_cutoff} | Rerank: {rerank} | Rerank Top K: {rerank_top_k}")
         
         # 验证查询不为空
         if not query:
             return JsonResponse({'error': '搜索查询不能为空'}, status=400)
+        
+        performance_metrics['parse_params'] = (time.time() - parse_start_time) * 1000
+        
+        # 阶段2: 站点验证
+        site_validation_start_time = time.time()
         
         # 验证站点ID (如果提供)
         site_ids = []
@@ -146,9 +164,10 @@ async def semantic_search(request):
         else:
             site_ids = [site.id async for site in Site.objects.all()]
         
-        # 记录搜索开始时间
-        import time
-        start_time = time.time()
+        performance_metrics['site_validation'] = (time.time() - site_validation_start_time) * 1000
+        
+        # 阶段3: 构建搜索过滤器
+        filter_build_start_time = time.time()
         
         # 构建搜索过滤器
         filters = {}
@@ -158,6 +177,11 @@ async def semantic_search(request):
             filters['site_ids'] = site_ids
         if filter_mimetype:
             filters['mimetype'] = filter_mimetype
+        
+        performance_metrics['build_filters'] = (time.time() - filter_build_start_time) * 1000
+        
+        # 阶段4: 执行语义搜索
+        search_start_time = time.time()
         
         # 从索引模块中导入语义搜索函数
         from src.backend.sitesearch.indexer.search import semantic_search_documents
@@ -173,8 +197,13 @@ async def semantic_search(request):
             rerank_top_k=rerank_top_k
         )
         
-        # 计算执行时间
-        execution_time_ms = int((time.time() - start_time) * 1000)
+        performance_metrics['semantic_search'] = (time.time() - search_start_time) * 1000
+        
+        # 阶段5: 记录搜索日志
+        logging_start_time = time.time()
+        
+        # 计算总执行时间
+        total_execution_time_ms = int((time.time() - total_start_time) * 1000)
         
         # 记录搜索日志
         client_info = get_client_info(request)
@@ -183,13 +212,18 @@ async def semantic_search(request):
             search_type='semantic',
             site_id=site_id,
             results_count=search_results.get('total_count', 0),
-            execution_time_ms=execution_time_ms,
+            execution_time_ms=total_execution_time_ms,
             user_ip=client_info['user_ip'],
             user_agent=client_info['user_agent'],
             filters=filters,
             result_ids=[r.get('id') for r in search_results.get('results', [])]
         )
         await search_log.asave()
+        
+        performance_metrics['logging'] = (time.time() - logging_start_time) * 1000
+        
+        # 阶段6: 构建响应
+        response_build_start_time = time.time()
         
         # 构建响应
         response = {
@@ -198,13 +232,38 @@ async def semantic_search(request):
             'total_count': search_results.get('total_count', 0),
             'page': page,
             'top_k': top_k,
-            'execution_time_ms': execution_time_ms,
+            'execution_time_ms': total_execution_time_ms,
             'filters': filters
         }
+        
+        performance_metrics['build_response'] = (time.time() - response_build_start_time) * 1000
+        performance_metrics['total'] = total_execution_time_ms
+        
+        # 输出详细性能日志
+        logger.info(f"Semantic Search Performance Metrics - Query: '{query}' | Site: {site_id}")
+        logger.info(f"  ├─ Parse Parameters: {performance_metrics['parse_params']:.2f}ms")
+        logger.info(f"  ├─ Site Validation: {performance_metrics['site_validation']:.2f}ms")
+        logger.info(f"  ├─ Build Filters: {performance_metrics['build_filters']:.2f}ms")
+        logger.info(f"  ├─ Semantic Search: {performance_metrics['semantic_search']:.2f}ms")
+        logger.info(f"  ├─ Logging: {performance_metrics['logging']:.2f}ms")
+        logger.info(f"  ├─ Build Response: {performance_metrics['build_response']:.2f}ms")
+        logger.info(f"  └─ Total Execution: {performance_metrics['total']:.2f}ms")
+        logger.info(f"Results: {search_results.get('total_count', 0)} documents found")
+        
+        # 计算各阶段占比
+        if total_execution_time_ms > 0:
+            logger.info("Performance Breakdown:")
+            logger.info(f"  ├─ Search Phase: {(performance_metrics['semantic_search']/performance_metrics['total']*100):.1f}%")
+            logger.info(f"  ├─ Validation Phase: {(performance_metrics['site_validation']/performance_metrics['total']*100):.1f}%")
+            logger.info(f"  ├─ Logging Phase: {(performance_metrics['logging']/performance_metrics['total']*100):.1f}%")
+            logger.info(f"  └─ Other Phases: {((performance_metrics['parse_params']+performance_metrics['build_filters']+performance_metrics['build_response'])/performance_metrics['total']*100):.1f}%")
         
         return JsonResponse(response)
         
     except Exception as e:
+        total_error_time = (time.time() - total_start_time) * 1000
+        logger.error(f"Semantic Search Error after {total_error_time:.2f}ms - Query: '{query if 'query' in locals() else 'N/A'}' | Error: {str(e)}")
+        logger.error(f"Error traceback: {traceback.format_exc()}")
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 

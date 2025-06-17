@@ -16,7 +16,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 # 安全设置
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-development')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 # 应用定义

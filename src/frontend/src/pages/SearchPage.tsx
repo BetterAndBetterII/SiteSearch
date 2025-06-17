@@ -34,11 +34,7 @@ export function SearchPage() {
     rerank: true,
     rerank_top_k: 10
   });
-  // 用于临时存储未应用的参数
-  const [tempSearchParams, setTempSearchParams] = useState<SearchParams>(searchParams);
   const [mimeTypeFilter, setMimeTypeFilter] = useState<string>('');
-  const [tempMimeTypeFilter, setTempMimeTypeFilter] = useState<string>('');
-  const [hasParamChanges, setHasParamChanges] = useState(false);
 
   // 获取可用站点列表
   useEffect(() => {
@@ -55,12 +51,6 @@ export function SearchPage() {
     };
 
     fetchSites();
-  }, []);
-
-  // 初始化临时参数
-  useEffect(() => {
-    setTempSearchParams(searchParams);
-    setTempMimeTypeFilter(mimeTypeFilter);
   }, []);
 
   // 执行搜索
@@ -116,39 +106,19 @@ export function SearchPage() {
   const handleSiteChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const siteId = event.target.value || null;
     setSelectedSiteId(siteId);
-    
-    // 如果已经搜索过，使用新选择的站点重新搜索
-    if (hasSearched && query) {
-      fetchSearchResults(query, 1);
-    }
   };
   
   // 处理MIME类型选择
   const handleMimeTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setTempMimeTypeFilter(event.target.value);
-    setHasParamChanges(true);
+    setMimeTypeFilter(event.target.value);
   };
   
-  // 处理高级参数临时变更 (不立即搜索)
-  const handleTempParamChange = (param: keyof SearchParams, value: any) => {
-    setTempSearchParams(prev => ({
+  // 处理高级参数变更
+  const handleParamChange = (param: keyof SearchParams, value: any) => {
+    setSearchParams(prev => ({
       ...prev,
       [param]: value
     }));
-    setHasParamChanges(true);
-  };
-  
-  // 应用参数变更并执行搜索
-  const applyParamChanges = () => {
-    // 应用临时参数到实际参数
-    setSearchParams(tempSearchParams);
-    setMimeTypeFilter(tempMimeTypeFilter);
-    setHasParamChanges(false);
-    
-    // 如果已经搜索过，使用新参数重新搜索
-    if (hasSearched && query) {
-      fetchSearchResults(query, 1);
-    }
   };
 
   return (
@@ -183,7 +153,7 @@ export function SearchPage() {
             <div className="flex items-center">
               <span className="text-sm mr-2">文件类型:</span>
               <select
-                value={tempMimeTypeFilter}
+                value={mimeTypeFilter}
                 onChange={handleMimeTypeChange}
                 className="px-3 py-1 text-sm rounded-md bg-card border border-input focus:outline-none focus:ring-1 focus:ring-primary"
               >
@@ -221,11 +191,11 @@ export function SearchPage() {
                       type="range"
                       min="1"
                       max="50"
-                      value={tempSearchParams.top_k || 20}
-                      onChange={(e) => handleTempParamChange('top_k', parseInt(e.target.value))}
+                      value={searchParams.top_k || 20}
+                      onChange={(e) => handleParamChange('top_k', parseInt(e.target.value))}
                       className="flex-1"
                     />
-                    <span className="text-sm w-8 text-right">{tempSearchParams.top_k || 20}</span>
+                    <span className="text-sm w-8 text-right">{searchParams.top_k || 20}</span>
                   </div>
                 </div>
                 
@@ -238,11 +208,11 @@ export function SearchPage() {
                       min="0"
                       max="1"
                       step="0.05"
-                      value={tempSearchParams.similarity_cutoff || 0.6}
-                      onChange={(e) => handleTempParamChange('similarity_cutoff', parseFloat(e.target.value))}
+                      value={searchParams.similarity_cutoff || 0.6}
+                      onChange={(e) => handleParamChange('similarity_cutoff', parseFloat(e.target.value))}
                       className="flex-1"
                     />
-                    <span className="text-sm w-12 text-right">{(tempSearchParams.similarity_cutoff || 0.6).toFixed(2)}</span>
+                    <span className="text-sm w-12 text-right">{(searchParams.similarity_cutoff || 0.6).toFixed(2)}</span>
                   </div>
                 </div>
                 
@@ -251,14 +221,14 @@ export function SearchPage() {
                   <label className="text-sm mr-2">启用重排序:</label>
                   <input
                     type="checkbox"
-                    checked={tempSearchParams.rerank !== false}
-                    onChange={(e) => handleTempParamChange('rerank', e.target.checked)}
+                    checked={searchParams.rerank !== false}
+                    onChange={(e) => handleParamChange('rerank', e.target.checked)}
                     className="h-4 w-4"
                   />
                 </div>
                 
                 {/* 重排序 Top-K */}
-                {tempSearchParams.rerank !== false && (
+                {searchParams.rerank !== false && (
                   <div className="flex flex-col">
                     <label className="text-sm mb-1">重排序数量 (rerank_top_k)</label>
                     <div className="flex items-center gap-2">
@@ -266,11 +236,11 @@ export function SearchPage() {
                         type="range"
                         min="5"
                         max="20"
-                        value={tempSearchParams.rerank_top_k || 10}
-                        onChange={(e) => handleTempParamChange('rerank_top_k', parseInt(e.target.value))}
+                        value={searchParams.rerank_top_k || 10}
+                        onChange={(e) => handleParamChange('rerank_top_k', parseInt(e.target.value))}
                         className="flex-1"
                       />
-                      <span className="text-sm w-8 text-right">{tempSearchParams.rerank_top_k || 10}</span>
+                      <span className="text-sm w-8 text-right">{searchParams.rerank_top_k || 10}</span>
                     </div>
                   </div>
                 )}
@@ -279,16 +249,6 @@ export function SearchPage() {
               <div className="mt-3 flex flex-col gap-2">
                 <div className="text-xs text-muted-foreground">
                   <p>提示: 调整这些参数可以影响搜索结果的质量和性能。更高的 top_k 值会返回更多结果但可能降低质量；更高的相似度阈值会提高结果精度但可能减少返回数量。</p>
-                </div>
-                
-                <div className="flex justify-center mt-2">
-                  <button
-                    onClick={applyParamChanges}
-                    disabled={!hasParamChanges}
-                    className="px-4 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
-                  >
-                    应用参数设置
-                  </button>
                 </div>
               </div>
             </div>

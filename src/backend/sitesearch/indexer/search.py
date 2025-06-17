@@ -3,6 +3,8 @@
 实现基于向量索引的语义搜索功能
 """
 import asyncio
+import time
+import logging
 from typing import Dict, List, Any, Optional
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -10,6 +12,9 @@ from asgiref.sync import sync_to_async
 
 from src.backend.sitesearch.indexer.index_manager import IndexerFactory
 from src.backend.sitesearch.storage.models import Document as DBDocument, SiteDocument
+
+# 添加性能监控日志配置
+logger = logging.getLogger(__name__)
 
 async def semantic_search_documents(
     query: str,
@@ -39,6 +44,12 @@ async def semantic_search_documents(
     Returns:
         Dict[str, Any]: 搜索结果，包含结果列表和统计信息
     """
+    # 记录总体开始时间
+    total_start_time = time.time()
+    performance_metrics = {}
+    
+    logger.info(f"Starting semantic search - Query: '{query}' | Filters: {filters}")
+    
     if not query:
         return {
             "results": [],
@@ -46,6 +57,9 @@ async def semantic_search_documents(
             "page": page,
             "page_size": top_k
         }
+    
+    # 阶段1: 参数处理和准备
+    prep_start_time = time.time()
     
     # 获取站点ID（如果提供）
     site_id = filters.get('site_id') if filters else None
@@ -60,13 +74,26 @@ async def semantic_search_documents(
     if site_id:
         site_ids = [site_id]
     
+    performance_metrics['preparation'] = (time.time() - prep_start_time) * 1000
+    
     final_results = []
+    vector_search_total_time = 0
+    db_query_total_time = 0
 
-    for site_id in site_ids:
+    for current_site_id in site_ids:
+        # 阶段2: 获取索引器实例
+        indexer_start_time = time.time()
+        
         data_indexer = IndexerFactory.get_instance(
-            site_id=site_id or "global",
+            site_id=current_site_id or "global",
             **idx_options
         )
+        
+        indexer_time = (time.time() - indexer_start_time) * 1000
+        vector_search_total_time += indexer_time
+        
+        # 阶段3: 向量检索
+        vector_start_time = time.time()
         
         # 准备检索选项
         rtr_options = {}
@@ -83,13 +110,16 @@ async def semantic_search_documents(
             search_kwargs=rtr_options
         )
         
+        vector_time = (time.time() - vector_start_time) * 1000
+        vector_search_total_time += vector_time
+        
+        logger.info(f"Vector search for site {current_site_id}: {vector_time:.2f}ms, found {len(vector_results)} results")
+        
         if not vector_results:
-            return {
-                "results": [],
-                "total_count": 0,
-                "page": page,
-                "page_size": top_k
-            }
+            continue
+        
+        # 阶段4: 提取内容哈希
+        hash_extract_start_time = time.time()
         
         # 提取文档ID列表（去除site_id前缀）
         content_hash_list = []
@@ -100,24 +130,34 @@ async def semantic_search_documents(
                 content_hash = full_id.split(':', 1)[1]
                 content_hash_list.append(content_hash)
         
+        hash_extract_time = (time.time() - hash_extract_start_time) * 1000
+        
         # 查询数据库获取完整文档信息
         if not content_hash_list:
-            return {
-                "results": [],
-                "total_count": 0,
-                "page": page,
-                "page_size": top_k
-            }
+            continue
+        
+        # 阶段5: 数据库查询
+        db_start_time = time.time()
         
         # 构建查询条件
         db_documents = {}
+        doc_count = 0
         async for doc in DBDocument.objects.filter(content_hash__in=content_hash_list):
+            doc_count += 1
             # 如果提供了site_id，确保文档属于该站点
-            if site_id:
-                site_ids = await sync_to_async(doc.get_site_ids)()
-                if site_id not in site_ids:
+            if current_site_id:
+                site_ids_for_doc = await sync_to_async(doc.get_site_ids)()
+                if current_site_id not in site_ids_for_doc:
                     continue
             db_documents[doc.content_hash] = doc
+        
+        db_time = (time.time() - db_start_time) * 1000
+        db_query_total_time += db_time
+        
+        logger.info(f"DB query for site {current_site_id}: {db_time:.2f}ms, queried {doc_count} docs, matched {len(db_documents)} docs")
+        
+        # 阶段6: 结果构建
+        result_build_start_time = time.time()
         
         # 构建最终结果，保留向量检索的顺序
         for result in vector_results:
@@ -150,10 +190,47 @@ async def semantic_search_documents(
                             'content': snippet
                         }
                     })
+        
+        result_build_time = (time.time() - result_build_start_time) * 1000
+        
+        logger.info(f"Result building for site {current_site_id}: {result_build_time:.2f}ms, built {len(final_results)} results")
+    
+    # 阶段7: 分页处理
+    pagination_start_time = time.time()
     
     # 应用分页
     paginator = Paginator(final_results, top_k)
     page_obj = paginator.get_page(page)
+    
+    pagination_time = (time.time() - pagination_start_time) * 1000
+    
+    # 计算总耗时
+    total_time = (time.time() - total_start_time) * 1000
+    
+    # 记录性能指标
+    performance_metrics.update({
+        'vector_search_total': vector_search_total_time,
+        'db_query_total': db_query_total_time,
+        'pagination': pagination_time,
+        'total': total_time
+    })
+    
+    # 输出详细性能日志
+    logger.info(f"Semantic Search Internal Performance - Query: '{query}'")
+    logger.info(f"  ├─ Preparation: {performance_metrics['preparation']:.2f}ms")
+    logger.info(f"  ├─ Vector Search Total: {performance_metrics['vector_search_total']:.2f}ms")
+    logger.info(f"  ├─ DB Query Total: {performance_metrics['db_query_total']:.2f}ms")
+    logger.info(f"  ├─ Pagination: {performance_metrics['pagination']:.2f}ms")
+    logger.info(f"  └─ Total Internal: {performance_metrics['total']:.2f}ms")
+    logger.info(f"Final Results: {paginator.count} total documents, page {page}/{paginator.num_pages}")
+    
+    # 计算各阶段占比
+    if total_time > 0:
+        logger.info("Internal Performance Breakdown:")
+        logger.info(f"  ├─ Vector Search: {(performance_metrics['vector_search_total']/performance_metrics['total']*100):.1f}%")
+        logger.info(f"  ├─ Database Query: {(performance_metrics['db_query_total']/performance_metrics['total']*100):.1f}%")
+        logger.info(f"  ├─ Pagination: {(performance_metrics['pagination']/performance_metrics['total']*100):.1f}%")
+        logger.info(f"  └─ Preparation: {(performance_metrics['preparation']/performance_metrics['total']*100):.1f}%")
     
     return {
         "results": list(page_obj),
