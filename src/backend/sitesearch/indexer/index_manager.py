@@ -243,7 +243,8 @@ class DataIndexer:
                     ref_doc_id=doc_id,
                     delete_from_docstore=True
                 )
-            await self.doc_store.adelete_document(doc_ids)
+            for doc_id in doc_ids:
+                await self.doc_store.adelete_document(doc_id)
         except Exception as e:
             print(f"删除文档失败: {e}")
             return False
