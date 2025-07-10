@@ -237,18 +237,41 @@ class DataIndexer:
         Args:
             doc_ids: 要删除的文档ID列表
         """
+        if not doc_ids:
+            return True
         try:
-            for doc_id in doc_ids:
-                await self.index.adelete_ref_doc(
-                    ref_doc_id=doc_id,
-                    delete_from_docstore=True
-                )
-            for doc_id in doc_ids:
-                await self.doc_store.adelete_document(doc_id)
+            # 并发从索引删除
+            delete_ref_tasks = [
+                self.index.adelete_ref_doc(ref_doc_id=doc_id, delete_from_docstore=True)
+                for doc_id in doc_ids
+            ]
+            if delete_ref_tasks:
+                await asyncio.gather(*delete_ref_tasks)
+
+            # 并发从文档存储删除
+            delete_docstore_tasks = [
+                self.doc_store.adelete_document(doc_id) for doc_id in doc_ids
+            ]
+            if delete_docstore_tasks:
+                await asyncio.gather(*delete_docstore_tasks)
+
         except Exception as e:
-            print(f"删除文档失败: {e}")
+            logger.error(f"删除文档失败: {e}", exc_info=True)
             return False
         return True
+
+    async def _background_remove_documents(self, doc_ids: List[str]):
+        """在后台异步删除文档"""
+        if not doc_ids:
+            return
+        
+        logger.info(f"Starting background removal of {len(doc_ids)} failed documents.")
+        try:
+            # 直接调用改进后的删除方法
+            await self.aremove_documents_by_id(doc_ids)
+            logger.warning(f"Successfully removed {len(doc_ids)} failed documents in background: {doc_ids}")
+        except Exception as e:
+            logger.error(f"Error during background document removal: {e}", exc_info=True)
 
     async def remove_all_documents(self) -> None:
         """删除该站点的所有文档"""
@@ -470,8 +493,9 @@ class DataIndexer:
         
         # 统一删除所有获取失败的文档
         if docs_to_remove:
-            await self.aremove_documents_by_id(docs_to_remove)
-            logger.warning(f"Removed {len(docs_to_remove)} failed documents: {docs_to_remove}")
+            # 将删除任务放到后台执行
+            asyncio.create_task(self._background_remove_documents(docs_to_remove))
+            logger.warning(f"Scheduled background removal of {len(docs_to_remove)} failed documents: {docs_to_remove}")
         
         performance_metrics['format_results'] = (time.time() - format_start_time) * 1000
         
